@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { bitableListRecords } from '../_lib/feishu';
-import { FIELD_NAMES, PRAISE_TYPE_REVERSE } from '../_lib/constants';
-import { success, error, extractFields, formatDate } from '../_lib/utils';
+import { bitableListRecords } from './_lib/feishu';
+import { FIELD_NAMES, PRAISE_TYPE_REVERSE } from './_lib/constants';
+import { success, error, extractFields, formatDate } from './_lib/utils';
 
 const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
 
