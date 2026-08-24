@@ -35,10 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useCurrentUserProfile } from "@lark-apaas/client-toolkit/hooks/useCurrentUserProfile";
-import { useAppInfo } from "@lark-apaas/client-toolkit/hooks/useAppInfo";
-import { getDataloom } from "@lark-apaas/client-toolkit/dataloom";
-import { logger } from "@lark-apaas/client-toolkit/logger";
+import React from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,8 +47,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import React from "react";
-import { Image } from '@client/src/components/ui/image';
+
+// 飞书 SDK hooks - 在非飞书环境中安全调用
+import { useCurrentUserProfile } from "@lark-apaas/client-toolkit/hooks/useCurrentUserProfile";
+import { useAppInfo } from "@lark-apaas/client-toolkit/hooks/useAppInfo";
+import { getDataloom } from "@lark-apaas/client-toolkit/dataloom";
+import { logger } from "@lark-apaas/client-toolkit/logger";
 
 const ADMIN_USER_ID = '1855639467108443';
 
@@ -73,9 +74,22 @@ const GUEST_AVATAR =
 function LayoutContent() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const userInfo = useCurrentUserProfile();
-  const { appName } = useAppInfo();
 
+  // 安全调用飞书 hooks，非飞书环境返回 fallback
+  let userInfo: any;
+  let appInfo: any;
+  try {
+    userInfo = useCurrentUserProfile();
+  } catch {
+    userInfo = { user_id: "guest", name: "游客", avatar: undefined };
+  }
+  try {
+    appInfo = useAppInfo();
+  } catch {
+    appInfo = { appName: "夸夸平台" };
+  }
+
+  const appName = appInfo?.appName;
   const activeTitle =
     [...NAV_ITEMS, ...ADMIN_NAV_ITEMS].find((item) => item.path === pathname)?.label ?? "夸夸平台";
 
@@ -96,11 +110,15 @@ function LayoutContent() {
   };
 
   const handleLogin = async () => {
-    const dataloom = await getDataloom();
-    dataloom.service.session.redirectToLogin();
+    try {
+      const dataloom = await getDataloom();
+      dataloom.service.session.redirectToLogin();
+    } catch {
+      // 非飞书环境，忽略
+    }
   };
 
-  const isLoggedIn = !!userInfo?.user_id;
+  const isLoggedIn = !!userInfo?.user_id && userInfo?.user_id !== "guest";
   const userName = userInfo?.name ?? "游客";
   const userAvatar = isLoggedIn ? userInfo?.avatar : GUEST_AVATAR;
 
@@ -254,17 +272,11 @@ function LayoutContent() {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          {/* <Image
-            src="/logo.png"
-            alt="logo"
-            className="ml-auto h-8 w-auto object-contain"
-          /> */}
         </header>
         <div className="flex-1 overflow-auto">
           <Outlet />
         </div>
       </main>
-
     </>
   );
 }

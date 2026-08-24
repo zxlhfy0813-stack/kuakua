@@ -2,3 +2,7 @@
 @import "tw-animate-css";
 @import "./tailwind-theme.css";
 @import "./typography.css";
+
+/* 告诉 Tailwind 扫描本项目的文件，生成对应的工具类 */
+@source "./**/*.{ts,tsx}";
+@source "../shared/**/*.{ts,tsx}";
