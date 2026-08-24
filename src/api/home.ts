@@ -9,8 +9,9 @@ import type {
 export async function getHomeStatistics(): Promise<HomeStatisticsResponse> {
   try {
     const response = await axiosForBackend({
-      url: '/api/home/statistics',
+      url: '/api/home',
       method: 'GET',
+      params: { action: 'statistics' },
     });
     return response.data;
   } catch (error) {
@@ -25,9 +26,9 @@ export async function getHomeFeeds(
 ): Promise<HomeFeedsResponse> {
   try {
     const response = await axiosForBackend({
-      url: '/api/home/feeds',
+      url: '/api/home',
       method: 'GET',
-      params: { cursor, pageSize },
+      params: { action: 'feeds', cursor, pageSize },
     });
     return response.data;
   } catch (error) {
@@ -39,8 +40,9 @@ export async function getHomeFeeds(
 export async function getHomeTop5(): Promise<HomeTop5Response> {
   try {
     const response = await axiosForBackend({
-      url: '/api/home/top5',
+      url: '/api/home',
       method: 'GET',
+      params: { action: 'top5' },
     });
     return response.data;
   } catch (error) {

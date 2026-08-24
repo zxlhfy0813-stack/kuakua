@@ -15,6 +15,7 @@ export async function createPraise(
     const response = await axiosForBackend({
       url: '/api/praises',
       method: 'POST',
+      params: { action: 'create' },
       data,
     });
     return response.data;
@@ -29,8 +30,9 @@ export async function getPraiseDetail(
 ): Promise<PraiseDetailResponse> {
   try {
     const response = await axiosForBackend({
-      url: `/api/praises/${id}`,
+      url: '/api/praises',
       method: 'GET',
+      params: { action: 'get-by-id', id },
     });
     return response.data;
   } catch (error) {
@@ -42,8 +44,9 @@ export async function getPraiseDetail(
 export async function getRecentPraised(): Promise<RecentPraisedResponse> {
   try {
     const response = await axiosForBackend({
-      url: '/api/praises/recent-praised',
+      url: '/api/praises',
       method: 'GET',
+      params: { action: 'recent-praised' },
     });
     return response.data;
   } catch (error) {
@@ -56,8 +59,9 @@ export async function deletePraise(
   id: string,
 ): Promise<DeletePraiseResponse> {
   const response = await axiosForBackend({
-    url: `/api/praises/${id}`,
+    url: '/api/praises',
     method: 'DELETE',
+    params: { action: 'delete', recordId: id },
   });
   if (response.status === 403) {
     throw new Error('无操作权限，请联系管理员分配开发者角色');

@@ -11,8 +11,9 @@ import type {
 export async function getMyPraisesStatistics(): Promise<MyPraisesStatisticsResponse> {
   try {
     const response = await axiosForBackend({
-      url: '/api/my-praises/statistics',
+      url: '/api/my-praises',
       method: 'GET',
+      params: { action: 'statistics' },
     });
     return response.data;
   } catch (error) {
@@ -30,7 +31,7 @@ export async function getMyPraises(
     const response = await axiosForBackend({
       url: '/api/my-praises',
       method: 'GET',
-      params: { type, page, pageSize },
+      params: { action: 'list', type, page, pageSize },
     });
     return response.data;
   } catch (error) {
@@ -44,9 +45,9 @@ export async function exportPraises(
 ): Promise<ExportPraisesResponse> {
   try {
     const response = await axiosForBackend({
-      url: '/api/my-praises/export',
+      url: '/api/my-praises',
       method: 'GET',
-      params: { type },
+      params: { action: 'export', type },
     });
     return response.data;
   } catch (error) {
@@ -60,8 +61,9 @@ export async function deletePraise(
 ): Promise<DeletePraiseResponse> {
   try {
     const response = await axiosForBackend({
-      url: `/api/my-praises/${id}`,
+      url: '/api/my-praises',
       method: 'DELETE',
+      params: { action: 'delete', recordId: id },
     });
     return response.data;
   } catch (error) {

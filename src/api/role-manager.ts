@@ -24,38 +24,8 @@ export interface RoleInfo {
 
 export async function getRoles(): Promise<RoleInfo[]> {
   const response = await axiosForBackend({
-    url: '/api/role-manager/roles',
+    url: '/api/role-manager',
     method: 'GET',
-  });
-  if (response.status === 403) {
-    throw new Error('无操作权限');
-  }
-  return response.data;
-}
-
-export async function addRoleMembers(
-  bizID: string,
-  members: Record<string, unknown>,
-): Promise<void> {
-  const response = await axiosForBackend({
-    url: `/api/role-manager/roles/${bizID}/members`,
-    method: 'POST',
-    data: { members },
-  });
-  if (response.status === 403) {
-    throw new Error('无操作权限');
-  }
-  return response.data;
-}
-
-export async function removeRoleMembers(
-  bizID: string,
-  members: Record<string, unknown>,
-): Promise<void> {
-  const response = await axiosForBackend({
-    url: `/api/role-manager/roles/${bizID}/members/batch_remove`,
-    method: 'POST',
-    data: { members },
   });
   if (response.status === 403) {
     throw new Error('无操作权限');

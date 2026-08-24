@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { success, error } from '../_lib/utils';
+import { success, error } from './_lib/utils';
 
 /**
  * 角色管理 API

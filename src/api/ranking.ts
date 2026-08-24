@@ -12,7 +12,7 @@ export async function getRanking(
     const response = await axiosForBackend({
       url: '/api/ranking',
       method: 'GET',
-      params: { period },
+      params: { action: 'list', period },
     });
     return response.data;
   } catch (error) {
@@ -26,9 +26,9 @@ export async function exportRanking(
 ): Promise<RankingExportResponse> {
   try {
     const response = await axiosForBackend({
-      url: '/api/ranking/export',
+      url: '/api/ranking',
       method: 'GET',
-      params: { period },
+      params: { action: 'export', period },
     });
     return response.data;
   } catch (error) {
