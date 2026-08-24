@@ -8,6 +8,7 @@ import {
   convertExternalContact,
   type AccountType,
 } from '@client/src/components/business-ui/api/users/service';
+import { axiosForBackend } from '@lark-apaas/client-toolkit/utils/getAxiosForBackend';
 import { BaseCombobox } from '@client/src/components/business-ui/entity-combobox/base-combobox';
 import { useEntityComboboxContext } from '@client/src/components/business-ui/entity-combobox/context';
 import type {
@@ -26,12 +27,39 @@ function createUsersFetcher(options: { accountType?: AccountType; pageSize?: num
   const { accountType = 'apaas', pageSize = 100 } = options;
 
   return async (search: string) => {
-    const response = await searchUsers({ query: search, pageSize });
-    const userList = response?.data?.userList || [];
+    try {
+      // 优先使用 SDK 的 searchUsers
+      const response = await searchUsers({ query: search, pageSize });
+      const userList = response?.data?.userList || [];
+      if (userList.length > 0) {
+        return {
+          items: userList.map((user) => searchUserInfoToUser(user, accountType)),
+        };
+      }
+    } catch (err) {
+      console.warn('SDK searchUsers 失败，使用后端 API:', err);
+    }
 
-    return {
-      items: userList.map((user) => searchUserInfoToUser(user, accountType)),
-    };
+    // fallback: 使用后端 API 搜索
+    try {
+      const res = await axiosForBackend({
+        url: '/api/users',
+        method: 'GET',
+        params: { action: 'search', query: search, pageSize },
+      });
+      const userList = res.data?.userList || [];
+      return {
+        items: userList.map((user: any) => ({
+          id: user.user_id || user.open_id || '',
+          name: user.name?.zh_cn || user.name?.en_us || user.name || '',
+          avatar: user.avatar?.avatar_72 || user.avatar?.avatar_640 || '',
+          raw: user,
+        })),
+      };
+    } catch (fallbackErr) {
+      console.error('后端用户搜索也失败:', fallbackErr);
+      return { items: [] };
+    }
   };
 }
 

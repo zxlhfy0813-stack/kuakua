@@ -175,17 +175,17 @@ const EmptyTop5: React.FC = () => (
 const PAGE_SIZE = 20;
 
 async function fetchHomeStatistics(): Promise<HomeStatisticsResponse> {
-  const res = await axiosForBackend({ url: '/api/home/statistics', method: 'GET' });
+  const res = await axiosForBackend({ url: '/api/home', method: 'GET', params: { action: 'statistics' } });
   return res.data;
 }
 
 async function fetchHomeFeeds(cursor?: string, pageSize: number = 20): Promise<HomeFeedsResponse> {
-  const res = await axiosForBackend({ url: '/api/home/feeds', method: 'GET', params: { cursor, pageSize } });
+  const res = await axiosForBackend({ url: '/api/home', method: 'GET', params: { action: 'feeds', cursor, pageSize } });
   return res.data;
 }
 
 async function fetchHomeTop5(): Promise<HomeTop5Response> {
-  const res = await axiosForBackend({ url: '/api/home/top5', method: 'GET' });
+  const res = await axiosForBackend({ url: '/api/home', method: 'GET', params: { action: 'top5' } });
   return res.data;
 }
 
