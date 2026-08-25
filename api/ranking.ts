@@ -1,29 +1,28 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { bitableListRecords } from './_lib/feishu';
 import { FIELD_NAMES } from './_lib/constants';
-import { success, error, extractFields, getWeekStart, getMonthStart } from './_lib/utils';
+import { success, error, extractFields, getWeekStart, getMonthStart, getQuery } from './_lib/utils';
 
 const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'GET') {
-    return error(res, 'Method not allowed', 405);
+export default async function handler(request: Request): Promise<Response> {
+  if (request.method !== 'GET') {
+    return error('Method not allowed', 405);
   }
 
-  const action = (req.query.action as string) || 'list';
+  const action = getQuery(request).get('action') || 'list';
 
   try {
     switch (action) {
       case 'list':
-        return await handleList(req, res);
+        return await handleList(request);
       case 'export':
-        return await handleExport(req, res);
+        return await handleExport(request);
       default:
-        return error(res, 'Unknown action', 400);
+        return error('Unknown action', 400);
     }
   } catch (err: any) {
     console.error('排行榜 API 错误:', err);
-    return error(res, err.message || '服务器错误');
+    return error(err?.message || '服务器错误');
   }
 }
 
@@ -43,8 +42,8 @@ async function getAllPraises() {
 }
 
 // GET /api/ranking?action=list&period=week
-async function handleList(req: VercelRequest, res: VercelResponse) {
-  const period = (req.query.period as string) || 'week';
+async function handleList(request: Request): Promise<Response> {
+  const period = getQuery(request).get('period') || 'week';
   const timeStart = period === 'month' ? getMonthStart() : getWeekStart();
 
   const allItems = await getAllPraises();
@@ -75,7 +74,7 @@ async function handleList(req: VercelRequest, res: VercelResponse) {
       count,
     }));
 
-  return success(res, {
+  return success({
     items: ranking,
     period,
     total: filtered.length,
@@ -83,8 +82,8 @@ async function handleList(req: VercelRequest, res: VercelResponse) {
 }
 
 // GET /api/ranking?action=export&period=week
-async function handleExport(req: VercelRequest, res: VercelResponse) {
-  const period = (req.query.period as string) || 'week';
+async function handleExport(request: Request): Promise<Response> {
+  const period = getQuery(request).get('period') || 'week';
   const timeStart = period === 'month' ? getMonthStart() : getWeekStart();
 
   const allItems = await getAllPraises();
@@ -113,7 +112,7 @@ async function handleExport(req: VercelRequest, res: VercelResponse) {
       count,
     }));
 
-  return success(res, {
+  return success({
     items: ranking,
     period,
     exportedAt: new Date().toISOString(),

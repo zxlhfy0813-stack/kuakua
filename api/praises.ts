@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   bitableListRecords,
   bitableCreateRecord,
@@ -6,42 +5,43 @@ import {
   bitableBatchGetRecords,
 } from './_lib/feishu';
 import { FIELD_NAMES, PRAISE_TYPE_MAP } from './_lib/constants';
-import { success, error, extractFields, formatDate } from './_lib/utils';
+import { success, error, extractFields, formatDate, getQuery, getBody } from './_lib/utils';
 
 const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const action = (req.query.action as string) || 'create';
+export default async function handler(request: Request): Promise<Response> {
+  const action = getQuery(request).get('action') || 'create';
 
   try {
     switch (action) {
       case 'create':
-        if (req.method !== 'POST') return error(res, 'Method not allowed', 405);
-        return await handleCreate(req, res);
+        if (request.method !== 'POST') return error('Method not allowed', 405);
+        return await handleCreate(request);
       case 'get-by-id':
-        if (req.method !== 'GET') return error(res, 'Method not allowed', 405);
-        return await handleGetById(req, res);
+        if (request.method !== 'GET') return error('Method not allowed', 405);
+        return await handleGetById(request);
       case 'recent-praised':
-        if (req.method !== 'GET') return error(res, 'Method not allowed', 405);
-        return await handleRecentPraised(req, res);
+        if (request.method !== 'GET') return error('Method not allowed', 405);
+        return await handleRecentPraised(request);
       case 'delete':
-        if (req.method !== 'DELETE') return error(res, 'Method not allowed', 405);
-        return await handleDelete(req, res);
+        if (request.method !== 'DELETE') return error('Method not allowed', 405);
+        return await handleDelete(request);
       default:
-        return error(res, 'Unknown action', 400);
+        return error('Unknown action', 400);
     }
   } catch (err: any) {
     console.error('Praises API 错误:', err);
-    return error(res, err.message || '服务器错误');
+    return error(err?.message || '服务器错误');
   }
 }
 
 // POST /api/praises?action=create
-async function handleCreate(req: VercelRequest, res: VercelResponse) {
-  const { praisedUserId, praisedUserName, type, content, likeCount = 1 } = req.body;
+async function handleCreate(request: Request): Promise<Response> {
+  const body = await getBody(request);
+  const { praisedUserId, praisedUserName, type, content, likeCount = 1 } = body;
 
   if (!praisedUserId || !content) {
-    return error(res, '缺少必填字段', 400);
+    return error('缺少必填字段', 400);
   }
 
   const fields: Record<string, any> = {
@@ -57,24 +57,24 @@ async function handleCreate(req: VercelRequest, res: VercelResponse) {
 
   const record = await bitableCreateRecord(PRAISE_TABLE_ID, fields);
 
-  return success(res, {
+  return success({
     id: record.record_id,
     ...extractFields(record),
   }, 201);
 }
 
 // GET /api/praises?action=get-by-id&id=xxx
-async function handleGetById(req: VercelRequest, res: VercelResponse) {
-  const id = req.query.id as string;
-  if (!id) return error(res, '缺少 id 参数', 400);
+async function handleGetById(request: Request): Promise<Response> {
+  const id = getQuery(request).get('id');
+  if (!id) return error('缺少 id 参数', 400);
 
   const records = await bitableBatchGetRecords(PRAISE_TABLE_ID, [id]);
-  if (!records.length) return error(res, '记录不存在', 404);
+  if (!records.length) return error('记录不存在', 404);
 
   const item = records[0];
   const fields = extractFields(item);
 
-  return success(res, {
+  return success({
     id: item.record_id,
     praiser: fields[FIELD_NAMES.PRAISER] || '',
     praisedUser: fields[FIELD_NAMES.PRAISED_USER] || '',
@@ -86,9 +86,9 @@ async function handleGetById(req: VercelRequest, res: VercelResponse) {
 }
 
 // GET /api/praises?action=recent-praised&userId=xxx
-async function handleRecentPraised(req: VercelRequest, res: VercelResponse) {
-  const userId = req.query.userId as string;
-  if (!userId) return error(res, '缺少 userId 参数', 400);
+async function handleRecentPraised(request: Request): Promise<Response> {
+  const userId = getQuery(request).get('userId');
+  if (!userId) return error('缺少 userId 参数', 400);
 
   const { items } = await bitableListRecords(PRAISE_TABLE_ID, undefined, undefined, undefined, 50);
 
@@ -113,15 +113,15 @@ async function handleRecentPraised(req: VercelRequest, res: VercelResponse) {
     return true;
   });
 
-  return success(res, { items: unique.slice(0, 10) });
+  return success({ items: unique.slice(0, 10) });
 }
 
 // DELETE /api/praises?action=delete&recordId=xxx
-async function handleDelete(req: VercelRequest, res: VercelResponse) {
-  const recordId = req.query.recordId as string;
-  if (!recordId) return error(res, '缺少 recordId 参数', 400);
+async function handleDelete(request: Request): Promise<Response> {
+  const recordId = getQuery(request).get('recordId');
+  if (!recordId) return error('缺少 recordId 参数', 400);
 
   await bitableDeleteRecord(PRAISE_TABLE_ID, recordId);
 
-  return success(res, { success: true });
+  return success({ success: true });
 }

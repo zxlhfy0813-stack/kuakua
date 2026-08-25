@@ -1,22 +1,22 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { bitableListRecords } from './_lib/feishu';
 import { FIELD_NAMES, PRAISE_TYPE_REVERSE } from './_lib/constants';
-import { success, error, extractFields, formatDate } from './_lib/utils';
+import { success, error, extractFields, formatDate, getQuery } from './_lib/utils';
 
 const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'GET') {
-    return error(res, 'Method not allowed', 405);
+export default async function handler(request: Request): Promise<Response> {
+  if (request.method !== 'GET') {
+    return error('Method not allowed', 405);
   }
 
   try {
+    const query = getQuery(request);
     const { items, pageToken, hasMore } = await bitableListRecords(
       PRAISE_TABLE_ID,
       undefined,
       undefined,
-      req.query.cursor as string | undefined,
-      Number(req.query.pageSize) || 20,
+      query.get('cursor') || undefined,
+      Number(query.get('pageSize')) || 20,
     );
 
     const wallItems = items.map((item: any) => {
@@ -39,18 +39,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     );
 
     // 按类型筛选
-    const typeFilter = req.query.type as string | undefined;
+    const typeFilter = query.get('type') || undefined;
     const filtered = typeFilter
       ? wallItems.filter((item: any) => item.type === typeFilter)
       : wallItems;
 
-    return success(res, {
+    return success({
       items: filtered,
       nextCursor: hasMore ? pageToken : null,
       hasMore,
     });
   } catch (err: any) {
     console.error('获取夸夸墙失败:', err);
-    return error(res, err.message || '获取夸夸墙失败');
+    return error(err?.message || '获取夸夸墙失败');
   }
 }

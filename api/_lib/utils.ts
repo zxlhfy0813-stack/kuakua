@@ -1,14 +1,30 @@
-import type { VercelResponse } from '@vercel/node';
-
 /**
- * 统一 API 响应格式
+ * 统一 API 响应格式（Vercel Web Handler 标准 Response）
  */
-export function success(res: VercelResponse, data: any, status = 200) {
-  return res.status(status).json(data);
+export function success(data: any, status = 200): Response {
+  return Response.json(data, { status });
 }
 
-export function error(res: VercelResponse, message: string, status = 500) {
-  return res.status(status).json({ error: message });
+export function error(message: string, status = 500): Response {
+  return Response.json({ error: message }, { status });
+}
+
+/**
+ * 从 Web Request 的 URL 中解析查询参数
+ */
+export function getQuery(request: Request): URLSearchParams {
+  return new URL(request.url).searchParams;
+}
+
+/**
+ * 解析 JSON 请求体（无 body 时返回空对象）
+ */
+export async function getBody(request: Request): Promise<Record<string, any>> {
+  try {
+    return (await request.json()) || {};
+  } catch {
+    return {};
+  }
 }
 
 /**

@@ -1,36 +1,35 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { bitableListRecords } from './_lib/feishu';
 import { FIELD_NAMES, PRAISE_TYPE_REVERSE } from './_lib/constants';
-import { success, error, extractFields, formatDate, getWeekStart } from './_lib/utils';
+import { success, error, extractFields, formatDate, getWeekStart, getQuery } from './_lib/utils';
 
 const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'GET') {
-    return error(res, 'Method not allowed', 405);
+export default async function handler(request: Request): Promise<Response> {
+  if (request.method !== 'GET') {
+    return error('Method not allowed', 405);
   }
 
-  const action = (req.query.action as string) || 'statistics';
+  const action = getQuery(request).get('action') || 'statistics';
 
   try {
     switch (action) {
       case 'statistics':
-        return await handleStatistics(req, res);
+        return await handleStatistics();
       case 'feeds':
-        return await handleFeeds(req, res);
+        return await handleFeeds(request);
       case 'top5':
-        return await handleTop5(req, res);
+        return await handleTop5();
       default:
-        return error(res, 'Unknown action', 400);
+        return error('Unknown action', 400);
     }
   } catch (err: any) {
     console.error('首页 API 错误:', err);
-    return error(res, err.message || '服务器错误');
+    return error(err?.message || '服务器错误');
   }
 }
 
 // GET /api/home?action=statistics
-async function handleStatistics(req: VercelRequest, res: VercelResponse) {
+async function handleStatistics(): Promise<Response> {
   const allItems: any[] = [];
   let pageToken: string | undefined;
   let hasMore = true;
@@ -51,16 +50,17 @@ async function handleStatistics(req: VercelRequest, res: VercelResponse) {
     return new Date(createdAt).getTime() >= weekStart;
   });
 
-  return success(res, {
+  return success({
     totalCount: allItems.length,
     thisWeekCount: thisWeekPraises.length,
   });
 }
 
 // GET /api/home?action=feeds&page=1&pageSize=10
-async function handleFeeds(req: VercelRequest, res: VercelResponse) {
-  const page = Number(req.query.page) || 1;
-  const pageSize = Number(req.query.pageSize) || 10;
+async function handleFeeds(request: Request): Promise<Response> {
+  const query = getQuery(request);
+  const page = Number(query.get('page')) || 1;
+  const pageSize = Number(query.get('pageSize')) || 10;
 
   const { items, hasMore } = await bitableListRecords(
     PRAISE_TABLE_ID,
@@ -92,7 +92,7 @@ async function handleFeeds(req: VercelRequest, res: VercelResponse) {
   const start = (page - 1) * pageSize;
   const paged = feeds.slice(start, start + pageSize);
 
-  return success(res, {
+  return success({
     items: paged,
     total: feeds.length,
     page,
@@ -102,7 +102,7 @@ async function handleFeeds(req: VercelRequest, res: VercelResponse) {
 }
 
 // GET /api/home?action=top5
-async function handleTop5(req: VercelRequest, res: VercelResponse) {
+async function handleTop5(): Promise<Response> {
   const weekStart = getWeekStart();
   const allItems: any[] = [];
   let pageToken: string | undefined;
@@ -143,5 +143,5 @@ async function handleTop5(req: VercelRequest, res: VercelResponse) {
       count,
     }));
 
-  return success(res, { items: top5 });
+  return success({ items: top5 });
 }

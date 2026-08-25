@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { success, error } from './_lib/utils';
 
 /**
@@ -11,14 +10,14 @@ import { success, error } from './_lib/utils';
 // 简化的角色存储（实际应使用数据库）
 const ADMIN_USERS = (process.env.ADMIN_USER_IDS || '').split(',').filter(Boolean);
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'GET') {
-    return error(res, 'Method not allowed', 405);
+export default async function handler(request: Request): Promise<Response> {
+  if (request.method !== 'GET') {
+    return error('Method not allowed', 405);
   }
 
   try {
     // 返回简化的角色信息
-    return success(res, [
+    return success([
       {
         bizID: 'developer',
         name: '开发者',
@@ -30,6 +29,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ]);
   } catch (err: any) {
     console.error('获取角色失败:', err);
-    return error(res, err.message || '获取角色失败');
+    return error(err?.message || '获取角色失败');
   }
 }
