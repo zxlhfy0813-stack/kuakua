@@ -102,8 +102,8 @@ async function handleGetById(request: Request): Promise<Response> {
 // GET /api/praises?action=recent-praised&userId=xxx
 async function handleRecentPraised(request: Request): Promise<Response> {
   const src = getSource(request);
-  const userId = getQuery(request).get('userId');
-  if (!userId) return error('缺少 userId 参数', 400);
+  const userId = getQuery(request).get('userId') || getSessionUser(request)?.open_id || '';
+  if (!userId) return success({ items: [] });
 
   const { items } = await bitableListRecords(src.tableId, undefined, undefined, undefined, 50, src.appToken);
 
