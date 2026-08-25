@@ -5,7 +5,7 @@
   bitableBatchGetRecords,
 } from './_lib/feishu.js';
 import { FIELD_NAMES, PRAISE_TYPE_MAP } from './_lib/constants.js';
-import { success, error, extractFields, formatDate, getQuery, getBody } from './_lib/utils.js';
+import { success, error, extractFields, extractUserId, extractUserName, formatDate, getQuery, getBody } from './_lib/utils.js';
 
 const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
 
@@ -78,8 +78,8 @@ async function handleGetById(request: Request): Promise<Response> {
 
   return success({
     id: item.record_id,
-    praiser: fields[FIELD_NAMES.PRAISER] || '',
-    praisedUser: fields[FIELD_NAMES.PRAISED_USER] || '',
+    praiser: extractUserName(fields[FIELD_NAMES.PRAISER]),
+    praisedUser: extractUserName(fields[FIELD_NAMES.PRAISED_USER]),
     content: fields[FIELD_NAMES.CONTENT] || '',
     type: fields[FIELD_NAMES.PRAISE_TYPE] || '',
     likeCount: Number(fields[FIELD_NAMES.LIKE_COUNT]) || 0,
@@ -97,13 +97,13 @@ async function handleRecentPraised(request: Request): Promise<Response> {
   const praisedByMe = items
     .filter((item: any) => {
       const fields = extractFields(item);
-      return fields[FIELD_NAMES.PRAISER] === userId;
+      return extractUserId(fields[FIELD_NAMES.PRAISER]) === userId;
     })
     .map((item: any) => {
       const fields = extractFields(item);
       return {
-        userId: fields[FIELD_NAMES.PRAISED_USER],
-        name: fields[FIELD_NAMES.PRAISED_USER],
+        userId: extractUserId(fields[FIELD_NAMES.PRAISED_USER]),
+        name: extractUserName(fields[FIELD_NAMES.PRAISED_USER]),
         lastPraiseAt: formatDate(fields[FIELD_NAMES.CREATED_AT]),
       };
     });

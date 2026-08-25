@@ -3,12 +3,12 @@
  * 请根据你的飞书多维表格实际字段名修改
  */
 export const FIELD_NAMES = {
-  PRAISER: '夸赞人',          // 夸赞人 user_id
-  PRAISED_USER: '被夸人',     // 被夸人 user_id
-  PRAISE_TYPE: '夸赞类型',    // collaboration | professional | innovation | helpful
+  PRAISER: '夸赞人',          // 夸赞人 人员字段
+  PRAISED_USER: '被夸人',     // 被夸人 人员字段
+  PRAISE_TYPE: '夸赞类型',    // 单选：卓越协作 | 专业精湛 | 积极创新 | 乐于助人
   CONTENT: '夸赞内容',        // 夸赞文字内容
   LIKE_COUNT: '点赞数量',     // 点赞数
-  CREATED_AT: '创建时间',     // 创建时间
+  CREATED_AT: '创建日期',     // 创建日期
 };
 
 // 夸赞类型映射

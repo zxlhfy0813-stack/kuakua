@@ -1,6 +1,6 @@
 ﻿import { bitableListRecords } from './_lib/feishu.js';
 import { FIELD_NAMES } from './_lib/constants.js';
-import { success, error, extractFields, getWeekStart, getMonthStart, getQuery } from './_lib/utils.js';
+import { success, error, extractFields, extractUserId, extractUserName, getWeekStart, getMonthStart, getQuery } from './_lib/utils.js';
 
 const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
 
@@ -59,21 +59,24 @@ async function handleList(request: Request): Promise<Response> {
   });
 
   // 统计每个被夸人收到的夸赞数
-  const countMap: Record<string, number> = {};
+  const countMap: Record<string, { userId: string; name: string; count: number }> = {};
   filtered.forEach((item) => {
     const fields = extractFields(item);
-    const user = fields[FIELD_NAMES.PRAISED_USER] || '';
-    if (user) {
-      countMap[user] = (countMap[user] || 0) + 1;
+    const userId = extractUserId(fields[FIELD_NAMES.PRAISED_USER]);
+    if (userId) {
+      const name = extractUserName(fields[FIELD_NAMES.PRAISED_USER]);
+      countMap[userId] = countMap[userId] || { userId, name, count: 0 };
+      countMap[userId].count += 1;
     }
   });
 
-  const ranking = Object.entries(countMap)
-    .sort((a, b) => b[1] - a[1])
-    .map(([userId, count], index) => ({
+  const ranking = Object.values(countMap)
+    .sort((a, b) => b.count - a.count)
+    .map((item, index) => ({
       rank: index + 1,
-      userId,
-      count,
+      userId: item.userId,
+      name: item.name,
+      count: item.count,
     }));
 
   return success({
@@ -97,21 +100,24 @@ async function handleExport(request: Request): Promise<Response> {
     return new Date(createdAt).getTime() >= timeStart;
   });
 
-  const countMap: Record<string, number> = {};
+  const countMap: Record<string, { userId: string; name: string; count: number }> = {};
   filtered.forEach((item) => {
     const fields = extractFields(item);
-    const user = fields[FIELD_NAMES.PRAISED_USER] || '';
-    if (user) {
-      countMap[user] = (countMap[user] || 0) + 1;
+    const userId = extractUserId(fields[FIELD_NAMES.PRAISED_USER]);
+    if (userId) {
+      const name = extractUserName(fields[FIELD_NAMES.PRAISED_USER]);
+      countMap[userId] = countMap[userId] || { userId, name, count: 0 };
+      countMap[userId].count += 1;
     }
   });
 
-  const ranking = Object.entries(countMap)
-    .sort((a, b) => b[1] - a[1])
-    .map(([userId, count], index) => ({
+  const ranking = Object.values(countMap)
+    .sort((a, b) => b.count - a.count)
+    .map((item, index) => ({
       rank: index + 1,
-      userId,
-      count,
+      userId: item.userId,
+      name: item.name,
+      count: item.count,
     }));
 
   return success({

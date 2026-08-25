@@ -1,6 +1,6 @@
 ﻿import { bitableListRecords } from './_lib/feishu.js';
 import { FIELD_NAMES, PRAISE_TYPE_REVERSE } from './_lib/constants.js';
-import { success, error, extractFields, formatDate, getQuery } from './_lib/utils.js';
+import { success, error, extractFields, extractUserId, extractUserName, formatDate, getQuery } from './_lib/utils.js';
 
 const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
 
@@ -24,8 +24,8 @@ export default {
         const fields = extractFields(item);
         return {
           id: item.record_id,
-          praiser: fields[FIELD_NAMES.PRAISER] || '',
-          praisedUser: fields[FIELD_NAMES.PRAISED_USER] || '',
+          praiser: extractUserName(fields[FIELD_NAMES.PRAISER]),
+          praisedUser: extractUserName(fields[FIELD_NAMES.PRAISED_USER]),
           content: fields[FIELD_NAMES.CONTENT] || '',
           type: PRAISE_TYPE_REVERSE[fields[FIELD_NAMES.PRAISE_TYPE]] || null,
           likeCount: Number(fields[FIELD_NAMES.LIKE_COUNT]) || 0,

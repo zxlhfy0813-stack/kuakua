@@ -3,7 +3,6 @@ import { Trophy, Medal, Award, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import dayjs from 'dayjs';
-import { UserDisplay } from '@client/src/components/business-ui/user-display';
 import { getRanking, exportRanking } from '@client/src/api/ranking';
 import { logger } from '@lark-apaas/client-toolkit/logger';
 import type { RankingItem } from '@shared/api.interface';
@@ -228,7 +227,7 @@ const TopRankRow: React.FC<{ item: RankingItem }> = ({ item }) => {
       </span>
 
       <div className="flex-shrink-0">
-        <UserDisplay userId={item.userId} size="small" />
+        <TextUserDisplay name={item.name || item.userId} />
       </div>
 
       <div className="ml-auto flex items-baseline gap-1">
@@ -256,7 +255,7 @@ const NormalRankRow: React.FC<{
     </span>
 
     <div className="flex-shrink-0">
-        <UserDisplay userId={item.userId} size="small" />
+        <TextUserDisplay name={item.name || item.userId} />
     </div>
 
     <div className="ml-auto flex items-baseline gap-1">

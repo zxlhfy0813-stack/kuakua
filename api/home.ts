@@ -1,6 +1,6 @@
 ﻿import { bitableListRecords } from './_lib/feishu.js';
 import { FIELD_NAMES, PRAISE_TYPE_REVERSE } from './_lib/constants.js';
-import { success, error, extractFields, formatDate, getWeekStart, getQuery } from './_lib/utils.js';
+import { success, error, extractFields, extractUserId, extractUserName, formatDate, getWeekStart, getQuery } from './_lib/utils.js';
 
 const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
 
@@ -76,8 +76,8 @@ async function handleFeeds(request: Request): Promise<Response> {
     const fields = extractFields(item);
     return {
       id: item.record_id,
-      praiser: fields[FIELD_NAMES.PRAISER] || '',
-      praisedUser: fields[FIELD_NAMES.PRAISED_USER] || '',
+      praiser: extractUserName(fields[FIELD_NAMES.PRAISER]),
+      praisedUser: extractUserName(fields[FIELD_NAMES.PRAISED_USER]),
       content: fields[FIELD_NAMES.CONTENT] || '',
       type: PRAISE_TYPE_REVERSE[fields[FIELD_NAMES.PRAISE_TYPE]] || null,
       likeCount: Number(fields[FIELD_NAMES.LIKE_COUNT]) || 0,
@@ -126,23 +126,26 @@ async function handleTop5(): Promise<Response> {
   });
 
   // 统计每个被夸人收到的夸赞数
-  const countMap: Record<string, number> = {};
+  const countMap: Record<string, { userId: string; name: string; count: number }> = {};
   thisWeekItems.forEach((item) => {
     const fields = extractFields(item);
-    const user = fields[FIELD_NAMES.PRAISED_USER] || '';
-    if (user) {
-      countMap[user] = (countMap[user] || 0) + 1;
+    const userId = extractUserId(fields[FIELD_NAMES.PRAISED_USER]);
+    if (userId) {
+      const name = extractUserName(fields[FIELD_NAMES.PRAISED_USER]);
+      countMap[userId] = countMap[userId] || { userId, name, count: 0 };
+      countMap[userId].count += 1;
     }
   });
 
   // 排序取前5
-  const top5 = Object.entries(countMap)
-    .sort((a, b) => b[1] - a[1])
+  const top5 = Object.values(countMap)
+    .sort((a, b) => b.count - a.count)
     .slice(0, 5)
-    .map(([userId, count], index) => ({
+    .map((item, index) => ({
       rank: index + 1,
-      userId,
-      count,
+      userId: item.userId,
+      name: item.name,
+      count: item.count,
     }));
 
   return success({ items: top5 });

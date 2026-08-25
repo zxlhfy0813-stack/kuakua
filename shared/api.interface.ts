@@ -85,6 +85,7 @@ export type HomeFeedsResponse = {
  */
 export type Top5Item = {
   userId: string;
+  name?: string;
   count: number;
   rank: number;
 };
@@ -123,6 +124,7 @@ export type WallListResponse = {
  */
 export type RankingItem = {
   userId: string;
+  name?: string;
   count: number;
   rank: number;
 };

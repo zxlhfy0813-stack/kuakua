@@ -6,7 +6,6 @@ import 'dayjs/locale/zh-cn';
 import { Users, TrendingUp, Heart, Send, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosForBackend } from '@lark-apaas/client-toolkit/utils/getAxiosForBackend';
-import { UserDisplay } from '@client/src/components/business-ui/user-display';
 import { Button } from '@client/src/components/ui/button';
 import { logger } from '@lark-apaas/client-toolkit/logger';
 import type {
@@ -97,9 +96,9 @@ const isValidUserId = (id: string): boolean => {
 const FeedCard: React.FC<FeedCardProps> = ({ item }) => (
   <div className="rounded-xl bg-card p-5 shadow-sm transition-shadow duration-200 hover:shadow-md">
     <div className="flex items-center gap-2 text-sm">
-      <UserDisplay userId={item.praiser} size="small" />
+      <TextUserDisplay name={item.praiser} />
       <span className="text-muted-foreground">夸了</span>
-      <UserDisplay userId={item.praisedUser} size="small" />
+      <TextUserDisplay name={item.praisedUser} />
     </div>
     {/* <p className="mt-3 text-sm leading-relaxed text-foreground">
       {item.content}
@@ -143,7 +142,7 @@ const Top5Row: React.FC<Top5RowProps> = ({ item }) => {
         {item.rank}
       </span>
       <div className="min-w-0 flex-1">
-        <UserDisplay userId={item.userId} size="small" />
+        <TextUserDisplay name={item.name || item.userId} />
       </div>
       <span className="shrink-0 text-sm font-semibold text-primary">
         {item.count}次

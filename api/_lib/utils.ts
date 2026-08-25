@@ -35,6 +35,33 @@ export function extractFields(record: any): Record<string, any> {
 }
 
 /**
+ * 飞书「人员」字段返回数组 [{ id, name, en_name, avatar_url }]，
+ * 取第一个用户的 id（open_id）
+ */
+export function extractUserId(value: any): string {
+  const first = getUserFirst(value);
+  if (!first) return '';
+  if (typeof first === 'string') return first;
+  return first.id || first.user_id || first.open_id || '';
+}
+
+/**
+ * 飞书「人员」字段返回数组 [{ id, name, en_name, avatar_url }]，
+ * 取第一个用户的显示名
+ */
+export function extractUserName(value: any): string {
+  const first = getUserFirst(value);
+  if (!first) return '';
+  if (typeof first === 'string') return first;
+  return first.name || first.en_name || first.user_id || first.id || '';
+}
+
+function getUserFirst(value: any): any {
+  if (!value) return null;
+  return Array.isArray(value) ? value[0] : value;
+}
+
+/**
  * 格式化日期为 ISO 字符串
  */
 export function formatDate(dateStr: string | number): string {

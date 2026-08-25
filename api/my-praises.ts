@@ -4,6 +4,8 @@ import {
   success,
   error,
   extractFields,
+  extractUserId,
+  extractUserName,
   formatDate,
   getWeekStart,
   getMonthStart,
@@ -56,14 +58,14 @@ async function handleList(request: Request): Promise<Response> {
   const userPraises = items
     .filter((item: any) => {
       const fields = extractFields(item);
-      return fields[FIELD_NAMES.PRAISED_USER] === userId;
+      return extractUserId(fields[FIELD_NAMES.PRAISED_USER]) === userId;
     })
     .map((item: any) => {
       const fields = extractFields(item);
       return {
         id: item.record_id,
-        praiser: fields[FIELD_NAMES.PRAISER] || '',
-        praisedUser: fields[FIELD_NAMES.PRAISED_USER] || '',
+        praiser: extractUserName(fields[FIELD_NAMES.PRAISER]),
+        praisedUser: extractUserName(fields[FIELD_NAMES.PRAISED_USER]),
         content: fields[FIELD_NAMES.CONTENT] || '',
         type: PRAISE_TYPE_REVERSE[fields[FIELD_NAMES.PRAISE_TYPE]] || null,
         likeCount: Number(fields[FIELD_NAMES.LIKE_COUNT]) || 0,
@@ -94,7 +96,7 @@ async function handleStatistics(request: Request): Promise<Response> {
 
   const userPraises = items.filter((item: any) => {
     const fields = extractFields(item);
-    return fields[FIELD_NAMES.PRAISED_USER] === userId;
+    return extractUserId(fields[FIELD_NAMES.PRAISED_USER]) === userId;
   });
 
   const weekStart = getWeekStart();
@@ -147,14 +149,14 @@ async function handleExport(request: Request): Promise<Response> {
   const userPraises = items
     .filter((item: any) => {
       const fields = extractFields(item);
-      return fields[FIELD_NAMES.PRAISED_USER] === userId;
+      return extractUserId(fields[FIELD_NAMES.PRAISED_USER]) === userId;
     })
     .map((item: any) => {
       const fields = extractFields(item);
       return {
         id: item.record_id,
-        praiser: fields[FIELD_NAMES.PRAISER] || '',
-        praisedUser: fields[FIELD_NAMES.PRAISED_USER] || '',
+        praiser: extractUserName(fields[FIELD_NAMES.PRAISER]),
+        praisedUser: extractUserName(fields[FIELD_NAMES.PRAISED_USER]),
         content: fields[FIELD_NAMES.CONTENT] || '',
         type: PRAISE_TYPE_REVERSE[fields[FIELD_NAMES.PRAISE_TYPE]] || null,
         likeCount: Number(fields[FIELD_NAMES.LIKE_COUNT]) || 0,
