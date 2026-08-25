@@ -133,6 +133,8 @@ async function handleCallback(request: Request): Promise<Response> {
     // 2) 用临时授权 code 换取 user_access_token（必须带 app_access_token 头）
     //    新版 OIDC 应用需用 authen/v1/oidc/access_token，老版本用 authen/v1/access_token
     let tokenData: any = null;
+    let v1Raw: any = null;
+    let oidcRaw: any = null;
     const exchange = async (endpoint: string) => {
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -142,11 +144,18 @@ async function handleCallback(request: Request): Promise<Response> {
         },
         body: JSON.stringify({ grant_type: 'authorization_code', code }),
       });
-      return await res.json();
+      const raw = await res.text();
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return { raw };
+      }
     };
     tokenData = await exchange('https://open.feishu.cn/open-apis/authen/v1/access_token');
+    v1Raw = tokenData;
     if (tokenData.code !== 0 || !tokenData.data?.access_token) {
       const oidc = await exchange('https://open.feishu.cn/open-apis/authen/v1/oidc/access_token');
+      oidcRaw = oidc;
       if (oidc.code === 0 && oidc.data?.access_token) {
         tokenData = oidc;
       }
@@ -157,7 +166,8 @@ async function handleCallback(request: Request): Promise<Response> {
       if (existing && verifyToken(existing)) {
         return Response.redirect(`${APP_URL}/`, 302);
       }
-      return error(`飞书登录失败: ${tokenData.msg} (code: ${tokenData.code})`, 401);
+      console.error('v1 返回:', JSON.stringify(v1Raw), ' OIDC 返回:', JSON.stringify(oidcRaw));
+      return error(`飞书登录失败: ${tokenData.msg || JSON.stringify(tokenData)} (code: ${tokenData.code})`, 401);
     }
     const t = tokenData.data;
     const user_access_token = t.access_token;
@@ -190,8 +200,8 @@ async function handleCallback(request: Request): Promise<Response> {
     );
     return redirect;
   } catch (err: any) {
-    console.error('飞书登录回调失败:', err);
-    return error(err?.message || '登录失败', 500);
+    console.error('飞书登录回调失败:', err?.stack || err);
+    return error(`回调异常: ${err?.message || '未知错误'}`, 500);
   }
 }
 
