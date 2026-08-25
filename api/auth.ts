@@ -201,7 +201,8 @@ async function handleCallback(request: Request): Promise<Response> {
     return redirect;
   } catch (err: any) {
     console.error('飞书登录回调失败:', err?.stack || err);
-    return error(`回调异常: ${err?.message || '未知错误'}`, 500);
+    const stack = String(err?.stack || err?.message || '').split('\n').slice(0, 6).join(' | ');
+    return error(`回调异常: ${err?.message || '未知错误'} :: ${stack}`, 500);
   }
 }
 
