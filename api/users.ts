@@ -39,14 +39,14 @@ function getText(name: any): string {
   return name.zh_cn || name.en_us || name.en_name || '';
 }
 
-// 拉取通讯录全部用户（分页，上限 1000，若 org 更大可调）
+// 拉取通讯录全部用户（分页，每页最多100，上限 1000，若 org 更大可调）
 async function fetchAllUsers(): Promise<any[]> {
   const all: any[] = [];
   let pageToken: string | undefined;
   let count = 0;
   const MAX = 1000;
   while (count < MAX) {
-    const pageSize = Math.min(200, MAX - count);
+    const pageSize = Math.min(100, MAX - count);
     const params = new URLSearchParams();
     params.set('page_size', String(pageSize));
     params.set('user_id_type', 'open_id');
@@ -116,30 +116,28 @@ async function handleBatchGet(request: Request): Promise<Response> {
   try {
     const results: Record<string, any> = {};
 
-    // 批量获取用户信息（每次最多50个）
-    for (let i = 0; i < userIds.length; i += 50) {
-      const batch = userIds.slice(i, i + 50);
-      const promises = batch.map(async (userId) => {
-        try {
-          const data = await feishuRequest(
-            'GET',
-            `/contact/v3/users/${userId}?user_id_type=open_id`,
-          );
-          results[userId] = {
-            user_id: data.user?.open_id || data.user?.user_id || userId,
-            name: { zh_cn: getText(data.user?.name) || '未知用户' },
-            avatar: { avatar_72: data.user?.avatar?.avatar_72 || '' },
-            email: data.user?.email || '',
-          };
-        } catch {
-          results[userId] = {
-            user_id: userId,
-            name: { zh_cn: userId },
+    // 直接用通讯录列表构建 id->user 映射（单接口更稳定）
+    const users = await fetchAllUsers();
+    const byId = new Map<string, any>();
+    for (const u of users) {
+      const id = u.open_id || u.user_id;
+      if (id) byId.set(id, u);
+    }
+
+    for (const id of userIds) {
+      const u = byId.get(id);
+      results[id] = u
+        ? {
+            user_id: u.open_id || u.user_id || id,
+            name: { zh_cn: getText(u.name) || u.en_name || id },
+            avatar: { avatar_72: u.avatar?.avatar_72 || '' },
+            email: u.email || '',
+          }
+        : {
+            user_id: id,
+            name: { zh_cn: id },
             avatar: {},
           };
-        }
-      });
-      await Promise.all(promises);
     }
 
     return success({ userInfoMap: results });
