@@ -1,5 +1,6 @@
 import { success, error, getQuery } from './_lib/utils.js';
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, createHash, timingSafeEqual } from 'node:crypto';
+import { getTenantAccessToken } from './_lib/feishu.js';
 
 const APP_ID = process.env.FEISHU_APP_ID || '';
 const APP_SECRET = process.env.FEISHU_APP_SECRET || '';
@@ -70,6 +71,47 @@ async function handleLoginUrl(): Promise<Response> {
   return success({ url });
 }
 
+// ===== JSAPI 鉴权（飞书内免登需要）：jsapi_ticket + 签名 =====
+let _jsapiTicket: string | null = null;
+let _jsapiTicketExp = 0;
+
+async function getJsapiTicket(): Promise<string> {
+  if (_jsapiTicket && Date.now() < _jsapiTicketExp) return _jsapiTicket;
+  const token = await getTenantAccessToken();
+  const res = await fetch('https://open.feishu.cn/open-apis/jssdk/ticket/get', {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  const data = await res.json();
+  if (data.code !== 0 || !data.data?.ticket) {
+    throw new Error(`获取 jsapi_ticket 失败: ${data.msg} (code: ${data.code})`);
+  }
+  _jsapiTicket = data.data.ticket;
+  _jsapiTicketExp = Date.now() + (data.data.expire - 300) * 1000;
+  return _jsapiTicket!;
+}
+
+// 飞书 JSAPI 签名：sha1(jsapi_ticket=..&noncestr=..&timestamp=..&url=..)
+async function handleJsapiConfig(request: Request): Promise<Response> {
+  const url = getQuery(request).get('url') || `${APP_URL}/`;
+  try {
+    const ticket = await getJsapiTicket();
+    const nonceStr = Math.random().toString(36).slice(2);
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    const raw = `jsapi_ticket=${ticket}&noncestr=${nonceStr}&timestamp=${timestamp}&url=${url}`;
+    const signature = createHash('sha1').update(raw).digest('hex');
+    return success({
+      appId: APP_ID,
+      timestamp,
+      nonceStr,
+      signature,
+      jsApiList: ['requestAccess', 'requestAuthCode'],
+    });
+  } catch (err: any) {
+    console.error('JSAPI 配置失败:', err);
+    return error(err?.message || '获取 JSAPI 配置失败');
+  }
+}
+
 async function handleCallback(request: Request): Promise<Response> {
   const q = getQuery(request);
   const code = q.get('code');
@@ -89,15 +131,26 @@ async function handleCallback(request: Request): Promise<Response> {
     const app_access_token = appData.app_access_token;
 
     // 2) 用临时授权 code 换取 user_access_token（必须带 app_access_token 头）
-    const tokenRes = await fetch('https://open.feishu.cn/open-apis/authen/v1/access_token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${app_access_token}`,
-      },
-      body: JSON.stringify({ grant_type: 'authorization_code', code }),
-    });
-    const tokenData = await tokenRes.json();
+    //    新版 OIDC 应用需用 authen/v1/oidc/access_token，老版本用 authen/v1/access_token
+    let tokenData: any = null;
+    const exchange = async (endpoint: string) => {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${app_access_token}`,
+        },
+        body: JSON.stringify({ grant_type: 'authorization_code', code }),
+      });
+      return await res.json();
+    };
+    tokenData = await exchange('https://open.feishu.cn/open-apis/authen/v1/access_token');
+    if (tokenData.code !== 0 || !tokenData.data?.access_token) {
+      const oidc = await exchange('https://open.feishu.cn/open-apis/authen/v1/oidc/access_token');
+      if (oidc.code === 0 && oidc.data?.access_token) {
+        tokenData = oidc;
+      }
+    }
     if (tokenData.code !== 0 || !tokenData.data?.access_token) {
       // code 已使用/失效：若本地已登录则直接回首页，避免重复回调报错
       const existing = readCookie(request, COOKIE);
@@ -169,6 +222,8 @@ export default {
     switch (action) {
       case 'login-url':
         return await handleLoginUrl();
+      case 'jsapi-config':
+        return await handleJsapiConfig(request);
       case 'me':
         return await handleMe(request);
       case 'logout':

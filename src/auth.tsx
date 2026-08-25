@@ -81,15 +81,19 @@ export const KuakuaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [isApaas, refresh]);
 
-  // 飞书客户端内打开时：用飞书 JS-SDK 免登自动拿账号（需飞书后台配 H5 可信域名 + 开启免登）
+  // 飞书客户端内打开时：先做 JSAPI 鉴权，再免登（需飞书后台配 H5 可信域名 + 开启免登/JSAPI）
   useEffect(() => {
     if (isApaas) return;
     if (document.cookie.indexOf('kuakua_session') >= 0) return;
     const w = window as any;
-    const h5sdk = w.h5sdk;
-    const tt = w.tt;
-    if (!h5sdk || typeof h5sdk.ready !== 'function' || !tt) return;
-    h5sdk.ready(() => {
+    if (!w.h5sdk || typeof w.h5sdk.ready !== 'function') return;
+
+    const doFreeLogin = () => {
+      const tt = w.tt;
+      if (!tt) {
+        setLoading(false);
+        return;
+      }
       const requestAuthCode = () => {
         tt.requestAuthCode({
           appId: 'cli_a9a2bc6748f95cc6',
@@ -115,17 +119,31 @@ export const KuakuaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             }
           },
           fail: (err: any) => {
-            if (err && err.errno === 103) {
-              requestAuthCode();
-            } else {
-              setLoading(false);
-            }
+            if (err && err.errno === 103) requestAuthCode();
+            else setLoading(false);
           },
         });
       } else {
         requestAuthCode();
       }
-    });
+    };
+
+    // 先取 JSAPI 鉴权签名
+    fetch(`/api/auth?action=jsapi-config&url=${encodeURIComponent(window.location.href)}`)
+      .then((r) => r.json())
+      .then((cfg: any) => {
+        if (typeof w.h5sdk.config === 'function' && cfg && cfg.signature) {
+          w.h5sdk.config({
+            appId: cfg.appId,
+            timestamp: cfg.timestamp,
+            nonceStr: cfg.nonceStr,
+            signature: cfg.signature,
+            jsApiList: cfg.jsApiList || ['requestAccess', 'requestAuthCode'],
+          });
+        }
+        w.h5sdk.ready(() => doFreeLogin());
+      })
+      .catch(() => setLoading(false));
   }, [isApaas]);
 
   // 妙搭运行时：把平台用户同步进来
