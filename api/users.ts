@@ -8,27 +8,29 @@ import { success, error, getQuery } from './_lib/utils';
  * GET /api/users?action=search&query=xxx&pageSize=20
  * GET /api/users?action=batch-get&userIds=id1,id2
  */
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method !== 'GET') {
-    return error('Method not allowed', 405);
-  }
-
-  const action = getQuery(request).get('action') || 'search';
-
-  try {
-    switch (action) {
-      case 'search':
-        return await handleSearch(request);
-      case 'batch-get':
-        return await handleBatchGet(request);
-      default:
-        return error('Unknown action', 400);
+export default {
+  async fetch(request: Request): Promise<Response> {
+    if (request.method !== 'GET') {
+      return error('Method not allowed', 405);
     }
-  } catch (err: any) {
-    console.error('用户 API 错误:', err);
-    return error(err?.message || '服务器错误');
-  }
-}
+
+    const action = getQuery(request).get('action') || 'search';
+
+    try {
+      switch (action) {
+        case 'search':
+          return await handleSearch(request);
+        case 'batch-get':
+          return await handleBatchGet(request);
+        default:
+          return error('Unknown action', 400);
+      }
+    } catch (err: any) {
+      console.error('用户 API 错误:', err);
+      return error(err?.message || '服务器错误');
+    }
+  },
+};
 
 // GET /api/users?action=search&query=xxx&pageSize=20
 async function handleSearch(request: Request): Promise<Response> {

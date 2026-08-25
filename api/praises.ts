@@ -9,31 +9,33 @@ import { success, error, extractFields, formatDate, getQuery, getBody } from './
 
 const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
 
-export default async function handler(request: Request): Promise<Response> {
-  const action = getQuery(request).get('action') || 'create';
+export default {
+  async fetch(request: Request): Promise<Response> {
+    const action = getQuery(request).get('action') || 'create';
 
-  try {
-    switch (action) {
-      case 'create':
-        if (request.method !== 'POST') return error('Method not allowed', 405);
-        return await handleCreate(request);
-      case 'get-by-id':
-        if (request.method !== 'GET') return error('Method not allowed', 405);
-        return await handleGetById(request);
-      case 'recent-praised':
-        if (request.method !== 'GET') return error('Method not allowed', 405);
-        return await handleRecentPraised(request);
-      case 'delete':
-        if (request.method !== 'DELETE') return error('Method not allowed', 405);
-        return await handleDelete(request);
-      default:
-        return error('Unknown action', 400);
+    try {
+      switch (action) {
+        case 'create':
+          if (request.method !== 'POST') return error('Method not allowed', 405);
+          return await handleCreate(request);
+        case 'get-by-id':
+          if (request.method !== 'GET') return error('Method not allowed', 405);
+          return await handleGetById(request);
+        case 'recent-praised':
+          if (request.method !== 'GET') return error('Method not allowed', 405);
+          return await handleRecentPraised(request);
+        case 'delete':
+          if (request.method !== 'DELETE') return error('Method not allowed', 405);
+          return await handleDelete(request);
+        default:
+          return error('Unknown action', 400);
+      }
+    } catch (err: any) {
+      console.error('Praises API 错误:', err);
+      return error(err?.message || '服务器错误');
     }
-  } catch (err: any) {
-    console.error('Praises API 错误:', err);
-    return error(err?.message || '服务器错误');
-  }
-}
+  },
+};
 
 // POST /api/praises?action=create
 async function handleCreate(request: Request): Promise<Response> {

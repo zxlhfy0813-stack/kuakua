@@ -4,27 +4,29 @@ import { success, error, extractFields, getWeekStart, getMonthStart, getQuery } 
 
 const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
 
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method !== 'GET') {
-    return error('Method not allowed', 405);
-  }
-
-  const action = getQuery(request).get('action') || 'list';
-
-  try {
-    switch (action) {
-      case 'list':
-        return await handleList(request);
-      case 'export':
-        return await handleExport(request);
-      default:
-        return error('Unknown action', 400);
+export default {
+  async fetch(request: Request): Promise<Response> {
+    if (request.method !== 'GET') {
+      return error('Method not allowed', 405);
     }
-  } catch (err: any) {
-    console.error('排行榜 API 错误:', err);
-    return error(err?.message || '服务器错误');
-  }
-}
+
+    const action = getQuery(request).get('action') || 'list';
+
+    try {
+      switch (action) {
+        case 'list':
+          return await handleList(request);
+        case 'export':
+          return await handleExport(request);
+        default:
+          return error('Unknown action', 400);
+      }
+    } catch (err: any) {
+      console.error('排行榜 API 错误:', err);
+      return error(err?.message || '服务器错误');
+    }
+  },
+};
 
 async function getAllPraises() {
   const allItems: any[] = [];

@@ -12,31 +12,33 @@ import {
 
 const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
 
-export default async function handler(request: Request): Promise<Response> {
-  const action = getQuery(request).get('action') || 'list';
+export default {
+  async fetch(request: Request): Promise<Response> {
+    const action = getQuery(request).get('action') || 'list';
 
-  try {
-    switch (action) {
-      case 'list':
-        if (request.method !== 'GET') return error('Method not allowed', 405);
-        return await handleList(request);
-      case 'statistics':
-        if (request.method !== 'GET') return error('Method not allowed', 405);
-        return await handleStatistics(request);
-      case 'delete':
-        if (request.method !== 'DELETE') return error('Method not allowed', 405);
-        return await handleDelete(request);
-      case 'export':
-        if (request.method !== 'GET') return error('Method not allowed', 405);
-        return await handleExport(request);
-      default:
-        return error('Unknown action', 400);
+    try {
+      switch (action) {
+        case 'list':
+          if (request.method !== 'GET') return error('Method not allowed', 405);
+          return await handleList(request);
+        case 'statistics':
+          if (request.method !== 'GET') return error('Method not allowed', 405);
+          return await handleStatistics(request);
+        case 'delete':
+          if (request.method !== 'DELETE') return error('Method not allowed', 405);
+          return await handleDelete(request);
+        case 'export':
+          if (request.method !== 'GET') return error('Method not allowed', 405);
+          return await handleExport(request);
+        default:
+          return error('Unknown action', 400);
+      }
+    } catch (err: any) {
+      console.error('我的夸夸 API 错误:', err);
+      return error(err?.message || '服务器错误');
     }
-  } catch (err: any) {
-    console.error('我的夸夸 API 错误:', err);
-    return error(err?.message || '服务器错误');
-  }
-}
+  },
+};
 
 // GET /api/my-praises?action=list&userId=xxx
 async function handleList(request: Request): Promise<Response> {

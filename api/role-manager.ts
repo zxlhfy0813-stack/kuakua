@@ -10,25 +10,27 @@ import { success, error } from './_lib/utils';
 // 简化的角色存储（实际应使用数据库）
 const ADMIN_USERS = (process.env.ADMIN_USER_IDS || '').split(',').filter(Boolean);
 
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method !== 'GET') {
-    return error('Method not allowed', 405);
-  }
+export default {
+  async fetch(request: Request): Promise<Response> {
+    if (request.method !== 'GET') {
+      return error('Method not allowed', 405);
+    }
 
-  try {
-    // 返回简化的角色信息
-    return success([
-      {
-        bizID: 'developer',
-        name: '开发者',
-        description: '可以发送和管理夸夸',
-        roleMembers: {
-          userList: ADMIN_USERS.map((id) => ({ userID: id })),
+    try {
+      // 返回简化的角色信息
+      return success([
+        {
+          bizID: 'developer',
+          name: '开发者',
+          description: '可以发送和管理夸夸',
+          roleMembers: {
+            userList: ADMIN_USERS.map((id) => ({ userID: id })),
+          },
         },
-      },
-    ]);
-  } catch (err: any) {
-    console.error('获取角色失败:', err);
-    return error(err?.message || '获取角色失败');
-  }
-}
+      ]);
+    } catch (err: any) {
+      console.error('获取角色失败:', err);
+      return error(err?.message || '获取角色失败');
+    }
+  },
+};
