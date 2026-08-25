@@ -1,4 +1,4 @@
-import { success, error } from './_lib/utils';
+﻿import { success, error } from './_lib/utils.js';
 
 /**
  * 角色管理 API

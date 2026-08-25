@@ -1,5 +1,5 @@
-import { feishuRequest } from './_lib/feishu';
-import { success, error, getQuery } from './_lib/utils';
+﻿import { feishuRequest } from './_lib/feishu.js';
+import { success, error, getQuery } from './_lib/utils.js';
 
 /**
  * 用户搜索 API

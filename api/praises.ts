@@ -1,11 +1,11 @@
-import {
+﻿import {
   bitableListRecords,
   bitableCreateRecord,
   bitableDeleteRecord,
   bitableBatchGetRecords,
-} from './_lib/feishu';
-import { FIELD_NAMES, PRAISE_TYPE_MAP } from './_lib/constants';
-import { success, error, extractFields, formatDate, getQuery, getBody } from './_lib/utils';
+} from './_lib/feishu.js';
+import { FIELD_NAMES, PRAISE_TYPE_MAP } from './_lib/constants.js';
+import { success, error, extractFields, formatDate, getQuery, getBody } from './_lib/utils.js';
 
 const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
 

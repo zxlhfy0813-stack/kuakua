@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 统一 API 响应格式（Vercel Web Handler 标准 Response）
  */
 export function success(data: any, status = 200): Response {
