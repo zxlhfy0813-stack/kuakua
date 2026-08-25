@@ -28,6 +28,27 @@ const Ctx = createContext<AuthCtx>({
 
 export const useKuakuaAuth = () => useContext(Ctx);
 
+const SESSION_KEY = 'kuakua_session';
+
+function readSession(): { user: KuakuaUser | null; token: string } {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return { user: null, token: '' };
+    const d = JSON.parse(raw);
+    return { user: d?.user ?? null, token: d?.token || '' };
+  } catch {
+    return { user: null, token: '' };
+  }
+}
+
+function writeSession(user: KuakuaUser | null, token: string) {
+  if (user && token) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ user, token }));
+  } else {
+    localStorage.removeItem(SESSION_KEY);
+  }
+}
+
 // 是否运行在妙搭/apaas 运行时（此时由平台自动提供登录态，无需扫码）
 function isApaasRuntime(): boolean {
   if (typeof window === 'undefined') return false;
@@ -46,6 +67,17 @@ function toUser(u: any): KuakuaUser | null {
   };
 }
 
+async function exchange(code: string): Promise<void> {
+  const res = await axiosForBackend({
+    url: '/api/auth',
+    method: 'GET',
+    params: { action: 'exchange', code },
+  });
+  if (res.data?.loggedIn && res.data?.user && res.data?.token) {
+    writeSession(res.data.user, res.data.token);
+  }
+}
+
 export const KuakuaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<KuakuaUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -58,15 +90,22 @@ export const KuakuaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
+      const { user: cachedUser, token } = readSession();
+      if (!cachedUser || !token) {
+        setUser(null);
+        return;
+      }
       const res = await axiosForBackend({
         url: '/api/auth',
         method: 'GET',
         params: { action: 'me' },
+        headers: { 'X-Kuakua-Token': token },
       });
       if (res.data?.loggedIn && res.data?.user) {
         setUser(res.data.user);
       } else {
         setUser(null);
+        writeSession(null, '');
       }
     } catch {
       setUser(null);
@@ -77,6 +116,8 @@ export const KuakuaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   useEffect(() => {
     if (!isApaas) {
+      const { user: cachedUser } = readSession();
+      if (cachedUser) setUser(cachedUser);
       refresh();
     }
   }, [isApaas, refresh]);
@@ -84,7 +125,8 @@ export const KuakuaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // 飞书客户端内打开时免登（官方 step-3：h5sdk.ready → tt.requestAccess/requestAuthCode）
   useEffect(() => {
     if (isApaas) return;
-    if (document.cookie.indexOf('kuakua_session') >= 0) return;
+    const { user: cachedUser, token } = readSession();
+    if (cachedUser && token) return;
     const w = window as any;
     if (!w.h5sdk || typeof w.h5sdk.ready !== 'function') return;
 
@@ -94,15 +136,21 @@ export const KuakuaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setLoading(false);
         return;
       }
+      const handleCode = (code: string) => {
+        exchange(code)
+          .then(() => {
+            const s = readSession();
+            setUser(s.user);
+            setLoading(false);
+          })
+          .catch(() => setLoading(false));
+      };
       const requestAuthCode = () => {
         tt.requestAuthCode({
           appId: 'cli_a9a2bc6748f95cc6',
           success: (res: any) => {
-            if (res && res.code) {
-              window.location.href = `/api/auth?code=${encodeURIComponent(res.code)}`;
-            } else {
-              setLoading(false);
-            }
+            if (res && res.code) handleCode(res.code);
+            else setLoading(false);
           },
           fail: () => setLoading(false),
         });
@@ -112,11 +160,8 @@ export const KuakuaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           appID: 'cli_a9a2bc6748f95cc6',
           scopeList: [],
           success: (res: any) => {
-            if (res && res.code) {
-              window.location.href = `/api/auth?code=${encodeURIComponent(res.code)}`;
-            } else {
-              setLoading(false);
-            }
+            if (res && res.code) handleCode(res.code);
+            else setLoading(false);
           },
           fail: (err: any) => {
             if (err && err.errno === 103) requestAuthCode();
@@ -153,14 +198,11 @@ export const KuakuaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const logout = useCallback(async () => {
     try {
-      await axiosForBackend({
-        url: '/api/auth',
-        method: 'GET',
-        params: { action: 'logout' },
-      });
+      await axiosForBackend({ url: '/api/auth', method: 'GET', params: { action: 'logout' } });
     } catch {
       // ignore
     }
+    writeSession(null, '');
     setUser(null);
     window.location.href = '/';
   }, []);

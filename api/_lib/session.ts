@@ -40,6 +40,21 @@ function verifyToken(token: string): any {
 }
 
 export function getSessionUser(request: Request): SessionUser | null {
+  // 优先从 header 读取会话 token（前端放 localStorage 并在 axios 请求头带上）
+  const headerToken = request.headers.get('x-kuakua-token');
+  if (headerToken) {
+    const s = verifyToken(headerToken);
+    if (s && s.u) {
+      return {
+        open_id: s.u,
+        name: s.n || '',
+        avatar: s.a || '',
+        email: s.m || '',
+        access_token: s.t || '',
+      };
+    }
+    return null;
+  }
   const token = readCookie(request, COOKIE);
   if (!token) return null;
   const s = verifyToken(token);
