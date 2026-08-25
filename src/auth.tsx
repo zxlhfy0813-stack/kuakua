@@ -31,10 +31,7 @@ export const useKuakuaAuth = () => useContext(Ctx);
 // 是否运行在妙搭/apaas 运行时（此时由平台自动提供登录态，无需扫码）
 function isApaasRuntime(): boolean {
   if (typeof window === 'undefined') return false;
-  const w = window as any;
-  if (w._IS_Spark_RUNTIME) return true;
-  if ((process as any)?.env?.runtimeMode === 'fullstack') return true;
-  return false;
+  return !!((window as any)._IS_Spark_RUNTIME);
 }
 
 function toUser(u: any): KuakuaUser | null {
