@@ -89,6 +89,11 @@ async function handleCallback(request: Request): Promise<Response> {
     });
     const data = await res.json();
     if (data.code !== 0) {
+      // code 已被使用/失效：若本地已登录则直接回首页，避免重复回调报错
+      const existing = readCookie(request, COOKIE);
+      if (existing && verifyToken(existing)) {
+        return Response.redirect(`${APP_URL}/`, 302);
+      }
       return error(`飞书登录失败: ${data.msg} (code: ${data.code})`, 401);
     }
     const d = data.data || {};
