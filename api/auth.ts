@@ -9,7 +9,6 @@ const COOKIE = 'kuakua_session';
 const MAX_AGE = 60 * 60 * 24 * 7; // 7 天
 
 const AUTH_INDEX = 'https://open.feishu.cn/open-apis/authen/v1/index';
-const TOKEN_ENDPOINT = 'https://open.feishu.cn/open-apis/authen/v1/access_token';
 
 function b64url(buf: Buffer): string {
   return buf.toString('base64url');
@@ -77,32 +76,57 @@ async function handleCallback(request: Request): Promise<Response> {
   if (!code) return error('缺少 code 参数', 400);
 
   try {
-    const res = await fetch(TOKEN_ENDPOINT, {
+    // 1) 用 app_id + app_secret 获取 app_access_token
+    const appRes = await fetch('https://open.feishu.cn/open-apis/auth/v3/app_access_token/internal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        grant_type: 'authorization_code',
-        code,
-        app_id: APP_ID,
-        app_secret: APP_SECRET,
-      }),
+      body: JSON.stringify({ app_id: APP_ID, app_secret: APP_SECRET }),
     });
-    const data = await res.json();
-    if (data.code !== 0) {
-      // code 已被使用/失效：若本地已登录则直接回首页，避免重复回调报错
+    const appData = await appRes.json();
+    if (appData.code !== 0 || !appData.app_access_token) {
+      return error(`获取 app_access_token 失败: ${appData.msg} (code: ${appData.code})`, 401);
+    }
+    const app_access_token = appData.app_access_token;
+
+    // 2) 用临时授权 code 换取 user_access_token（必须带 app_access_token 头）
+    const tokenRes = await fetch('https://open.feishu.cn/open-apis/authen/v1/access_token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${app_access_token}`,
+      },
+      body: JSON.stringify({ grant_type: 'authorization_code', code }),
+    });
+    const tokenData = await tokenRes.json();
+    if (tokenData.code !== 0 || !tokenData.data?.access_token) {
+      // code 已使用/失效：若本地已登录则直接回首页，避免重复回调报错
       const existing = readCookie(request, COOKIE);
       if (existing && verifyToken(existing)) {
         return Response.redirect(`${APP_URL}/`, 302);
       }
-      return error(`飞书登录失败: ${data.msg} (code: ${data.code})`, 401);
+      return error(`飞书登录失败: ${tokenData.msg} (code: ${tokenData.code})`, 401);
     }
-    const d = data.data || {};
+    const t = tokenData.data;
+    const user_access_token = t.access_token;
+
+    // 3) 用 user_access_token 获取用户信息（可选，exchange 响应里也带基础字段）
+    let u: any = {};
+    try {
+      const infoRes = await fetch('https://open.feishu.cn/open-apis/authen/v1/user_info', {
+        headers: { 'Authorization': `Bearer ${user_access_token}` },
+      });
+      const infoData = await infoRes.json();
+      if (infoData.code === 0 && infoData.data) u = infoData.data;
+    } catch {
+      // ignore
+    }
+
     const session = {
-      u: d.open_id,
-      n: d.name,
-      a: d.avatar_url,
-      m: d.email || '',
-      t: d.access_token,
+      u: u.open_id || t.open_id,
+      n: u.name || t.name || u.en_name || '',
+      a: u.avatar_url || t.avatar_url || '',
+      m: u.email || t.email || '',
+      t: user_access_token,
       e: Math.floor(Date.now() / 1000) + MAX_AGE,
     };
     const token = makeToken(session);
