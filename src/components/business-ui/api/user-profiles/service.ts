@@ -1,3 +1,4 @@
+import { getAssetsUrl } from '@lark-apaas/client-toolkit/tools/services';
 import { axiosForBackend } from '@lark-apaas/client-toolkit/utils/getAxiosForBackend';
 import type { AccountType, UserProfileData } from '@lark-apaas/client-toolkit/tools/services';
 
@@ -30,4 +31,5 @@ export async function fetchUserProfile(
   }
 }
 
+export { getAssetsUrl };
 export type { AccountType, UserProfileData };
