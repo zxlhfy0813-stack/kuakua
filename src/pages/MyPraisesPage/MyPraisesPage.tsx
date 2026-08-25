@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { myPraisesApi } from '@client/src/api';
-import { UserDisplay } from '@client/src/components/business-ui/user-display';
+import UserCell from '@/components/UserCell';
 import { logger } from '@lark-apaas/client-toolkit/logger';
 import dayjs from 'dayjs';
 import type { MyPraiseItem, PraiseType } from '@shared/api.interface';
@@ -255,7 +255,7 @@ const PraiseCard = ({ item, isLast }: PraiseCardProps) => {
     >
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <UserDisplay value={item.praiser as any} size="small" />
+          <UserCell user={item.praiser} size="small" />
         </div>
         {typeConfig && (
           <span

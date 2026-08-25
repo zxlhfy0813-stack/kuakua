@@ -6,7 +6,7 @@ import 'dayjs/locale/zh-cn';
 import { Users, TrendingUp, Heart, Send, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosForBackend } from '@lark-apaas/client-toolkit/utils/getAxiosForBackend';
-import { UserDisplay } from '@client/src/components/business-ui/user-display';
+import UserCell from '@/components/UserCell';
 import { Button } from '@client/src/components/ui/button';
 import { useKuakuaAuth } from '@/auth';
 import { logger } from '@lark-apaas/client-toolkit/logger';
@@ -98,9 +98,9 @@ const isValidUserId = (id: string): boolean => {
 const FeedCard: React.FC<FeedCardProps> = ({ item }) => (
   <div className="rounded-xl bg-card p-5 shadow-sm transition-shadow duration-200 hover:shadow-md">
     <div className="flex items-center gap-2 text-sm">
-      <UserDisplay value={item.praiser as any} size="small" />
+      <UserCell user={item.praiser} size="small" />
       <span className="text-muted-foreground">夸了</span>
-      <UserDisplay value={item.praisedUser as any} size="small" />
+      <UserCell user={item.praisedUser} size="small" />
     </div>
     {/* <p className="mt-3 text-sm leading-relaxed text-foreground">
       {item.content}
@@ -144,7 +144,7 @@ const Top5Row: React.FC<Top5RowProps> = ({ item }) => {
         {item.rank}
       </span>
       <div className="min-w-0 flex-1">
-        <TextUserDisplay name={item.name || item.userId} />
+        <UserCell user={{ user_id: item.userId, name: item.name }} size="small" />
       </div>
       <span className="shrink-0 text-sm font-semibold text-primary">
         {item.count}次
