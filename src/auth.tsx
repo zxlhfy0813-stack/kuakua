@@ -81,6 +81,24 @@ export const KuakuaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [isApaas, refresh]);
 
+  // 飞书客户端内打开时：用 JS-SDK 免登自动拿账号（需在飞书后台配 H5 可信域名 + 开启免登）
+  useEffect(() => {
+    if (isApaas) return;
+    if (document.cookie.indexOf('kuakua_session') >= 0) return;
+    const w = window as any;
+    const tt = w.tt || w.jssdk;
+    if (!tt || typeof tt.login !== 'function') return;
+    tt.login({ force: false })
+      .then((res: any) => {
+        if (res && res.code) {
+          window.location.href = `/api/auth?code=${encodeURIComponent(res.code)}`;
+        } else {
+          setLoading(false);
+        }
+      })
+      .catch(() => setLoading(false));
+  }, [isApaas]);
+
   // 妙搭运行时：把平台用户同步进来
   useEffect(() => {
     if (isApaas) {
