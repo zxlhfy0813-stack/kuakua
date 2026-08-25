@@ -11,24 +11,6 @@ import {
   Database,
 } from "lucide-react";
 import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-} from "@/components/ui/breadcrumb";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -61,11 +43,11 @@ const NAV_ITEMS = [
   { path: "/my-praises", label: "我的夸夸", icon: Heart },
   { path: "/ranking", label: "夸夸排行榜", icon: Trophy },
   { path: "/wall", label: "夸夸墙", icon: LayoutGrid },
+  { path: "/data-source", label: "数据源", icon: Database },
 ];
 
 const ADMIN_NAV_ITEMS = [
   { path: "/role-management", label: "角色管理", icon: Shield },
-  { path: "/data-source", label: "数据源", icon: Database },
 ];
 
 const GUEST_AVATAR =
@@ -85,202 +67,122 @@ function LayoutContent() {
   }
 
   const appName = appInfo?.appName;
-  const activeTitle =
-    [...NAV_ITEMS, ...ADMIN_NAV_ITEMS].find((item) => item.path === pathname)?.label ?? "夸夸平台";
-
   const isAdmin = user?.open_id === ADMIN_USER_ID;
-
-  const handleLogout = () => {
-    logout();
-  };
-
-  const handleLogin = () => {
-    login();
-  };
-
   const isLoggedIn = !!user;
   const userName = user?.name ?? "游客";
   const userAvatar = isLoggedIn ? user?.avatar : GUEST_AVATAR;
 
   return (
-    <>
-      <Sidebar collapsible="icon">
-        <SidebarHeader>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton size="lg" asChild>
-                <Link to="/">
-                  <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
-                    夸
-                  </div>
-                  <div className="flex flex-col gap-0.5 leading-none group-data-[collapsible=icon]:hidden">
-                    <span className="font-semibold">{appName || "夸夸平台"}</span>
-                    <span className="text-xs text-muted-foreground">
-                      团队认可文化
-                    </span>
-                  </div>
+    <div className="flex min-h-screen flex-col">
+      {/* 顶部导航 */}
+      <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-[1280px] items-center gap-4 px-4">
+          <Link to="/" className="flex shrink-0 items-center gap-2">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
+              夸
+            </div>
+            <span className="hidden font-semibold sm:inline">{appName || "夸夸平台"}</span>
+          </Link>
+
+          <nav className="flex flex-1 items-center gap-1 overflow-x-auto">
+            {NAV_ITEMS.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors hover:bg-accent ${
+                  pathname === item.path ? "bg-accent font-medium text-foreground" : "text-muted-foreground"
+                }`}
+              >
+                <item.icon className="size-4" />
+                <span>{item.label}</span>
+              </Link>
+            ))}
+            {isAdmin &&
+              ADMIN_NAV_ITEMS.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors hover:bg-accent ${
+                    pathname === item.path ? "bg-accent font-medium text-foreground" : "text-muted-foreground"
+                  }`}
+                >
+                  <item.icon className="size-4" />
+                  <span>{item.label}</span>
                 </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarHeader>
+              ))}
+          </nav>
 
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {NAV_ITEMS.map((item) => (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={pathname === item.path}
-                      tooltip={item.label}
-                    >
-                      <Link to={item.path}>
-                        <item.icon className="size-4" />
-                        <span>{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-                {isAdmin &&
-                  ADMIN_NAV_ITEMS.map((item) => (
-                    <SidebarMenuItem key={item.path}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={pathname === item.path}
-                        tooltip={item.label}
-                      >
-                        <Link to={item.path}>
-                          <item.icon className="size-4" />
-                          <span>{item.label}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === "/data-source"}
-                    tooltip="数据源"
-                  >
-                    <Link to="/data-source">
-                      <Database className="size-4" />
-                      <span>数据源</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-
-        <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex shrink-0 items-center gap-2 rounded-full px-1.5 py-1 hover:bg-accent">
+                <Avatar className="size-7">
+                  <AvatarImage src={userAvatar} alt={userName} />
+                  <AvatarFallback className="text-xs">{userName.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <span className="hidden max-w-[8rem] truncate text-sm sm:inline">{userName}</span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="bottom" align="end" className="w-48">
               {isLoggedIn ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <SidebarMenuButton size="lg" tooltip={userName}>
-                      <Avatar className="size-6">
-                        <AvatarImage src={userAvatar} alt={userName} />
-                        <AvatarFallback className="text-xs">
-                          {userName.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="group-data-[collapsible=icon]:hidden">
-                        {userName}
-                      </span>
-                    </SidebarMenuButton>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    side="right"
-                    align="end"
-                    className="w-48"
-                  >
-                    <div className="px-2 py-1.5 text-sm">
-                      <p className="font-medium">{userName}</p>
-                    </div>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate("/my-praises")}>
-                      <Heart className="mr-2 size-4" />
-                      我的夸夸
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/send")}>
-                      <Send className="mr-2 size-4" />
-                      发送夸夸
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/wall")}>
-                      <LayoutGrid className="mr-2 size-4" />
-                      夸夸墙
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <DropdownMenuItem
-                          onSelect={(e: Event) => e.preventDefault()}
-                        >
-                          <LogOut className="mr-2 size-4" />
-                          退出登录
-                        </DropdownMenuItem>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>确认退出登录？</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            退出后需要重新登录才能使用夸夸平台
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>取消</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleLogout}>
-                            确认退出
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <>
+                  <div className="px-2 py-1.5 text-sm">
+                    <p className="truncate font-medium">{userName}</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/my-praises")}>
+                    <Heart className="mr-2 size-4" />
+                    我的夸夸
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/send")}>
+                    <Send className="mr-2 size-4" />
+                    发送夸夸
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/wall")}>
+                    <LayoutGrid className="mr-2 size-4" />
+                    夸夸墙
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem onSelect={(e: Event) => e.preventDefault()}>
+                        <LogOut className="mr-2 size-4" />
+                        退出登录
+                      </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>确认退出登录？</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          退出后需要重新登录才能使用夸夸平台
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>取消</AlertDialogCancel>
+                        <AlertDialogAction onClick={logout}>确认退出</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
               ) : (
-                <SidebarMenuButton size="lg" asChild onClick={handleLogin}>
-                  <button className="w-full justify-start gap-2">
-                    <LogIn className="size-4" />
-                    <span className="group-data-[collapsible=icon]:hidden">
-                      登录
-                    </span>
-                  </button>
-                </SidebarMenuButton>
+                <DropdownMenuItem onClick={login}>
+                  <LogIn className="mr-2 size-4" />
+                  登录
+                </DropdownMenuItem>
               )}
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      </Sidebar>
-
-      <main className="flex-1 flex flex-col overflow-hidden p-8">
-        <header className="flex items-center gap-2 mb-6">
-          <SidebarTrigger />
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem className="text-foreground font-medium">
-                {activeTitle}
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </header>
-        <div className="flex-1 overflow-auto">
-          <Outlet />
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+      </header>
+
+      <main className="flex-1">
+        <Outlet />
       </main>
-    </>
+    </div>
   );
 }
 
 const Layout = () => {
-  return (
-    <SidebarProvider>
-      <LayoutContent />
-    </SidebarProvider>
-  );
+  return <LayoutContent />;
 };
 
 export default Layout;
