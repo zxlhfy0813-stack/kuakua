@@ -27,20 +27,7 @@ function createUsersFetcher(options: { accountType?: AccountType; pageSize?: num
   const { accountType = 'apaas', pageSize = 100 } = options;
 
   return async (search: string) => {
-    try {
-      // 优先使用 SDK 的 searchUsers
-      const response = await searchUsers({ query: search, pageSize });
-      const userList = response?.data?.userList || [];
-      if (userList.length > 0) {
-        return {
-          items: userList.map((user) => searchUserInfoToUser(user, accountType)),
-        };
-      }
-    } catch (err) {
-      console.warn('SDK searchUsers 失败，使用后端 API:', err);
-    }
-
-    // fallback: 使用后端 API 搜索
+    // 优先使用后端 API（独立/飞书 webview 环境下 SDK 会失效或卡住）
     try {
       const res = await axiosForBackend({
         url: '/api/users',
@@ -57,7 +44,7 @@ function createUsersFetcher(options: { accountType?: AccountType; pageSize?: num
         })),
       };
     } catch (fallbackErr) {
-      console.error('后端用户搜索也失败:', fallbackErr);
+      console.error('后端用户搜索失败:', fallbackErr);
       return { items: [] };
     }
   };

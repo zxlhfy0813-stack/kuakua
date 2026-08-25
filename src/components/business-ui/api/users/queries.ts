@@ -12,20 +12,7 @@ async function fetchUsersByIds(
   userIds: string[],
   accountType: AccountType = 'apaas',
 ) {
-  try {
-    // 优先使用 SDK
-    const result = await listUsersByIds(userIds, accountType);
-    // 检查结果是否有效
-    const userInfoMap = result?.data?.userInfoMap || {};
-    const hasValidData = userIds.some((id) => userInfoMap[id]?.name);
-    if (hasValidData) {
-      return result;
-    }
-  } catch (err) {
-    console.warn('SDK listUsersByIds 失败，使用后端 API:', err);
-  }
-
-  // fallback: 使用后端 API
+  // 直接使用后端 API（独立/飞书 webview 环境下 SDK 会失效或卡住）
   try {
     const res = await axiosForBackend({
       url: '/api/users',
