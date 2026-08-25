@@ -1,5 +1,6 @@
 import { success, error, getQuery } from './_lib/utils.js';
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, createHash, timingSafeEqual } from 'node:crypto';
+import { getTenantAccessToken } from './_lib/feishu.js';
 
 const APP_ID = process.env.FEISHU_APP_ID || '';
 const APP_SECRET = process.env.FEISHU_APP_SECRET || '';
@@ -106,6 +107,47 @@ async function handleLoginUrl(): Promise<Response> {
   return success({ url });
 }
 
+// ===== JSAPI 鉴权（飞书内免登需要）：jsapi_ticket + 签名 =====
+let _jsapiTicket: string | null = null;
+let _jsapiTicketExp = 0;
+
+async function getJsapiTicket(): Promise<string> {
+  if (_jsapiTicket && Date.now() < _jsapiTicketExp) return _jsapiTicket;
+  const token = await getTenantAccessToken();
+  const res = await fetch('https://open.feishu.cn/open-apis/jssdk/ticket/get', {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  const data = await res.json();
+  if (data.code !== 0 || !data.data?.ticket) {
+    throw new Error(`获取 jsapi_ticket 失败: ${data.msg} (code: ${data.code})`);
+  }
+  _jsapiTicket = data.data.ticket;
+  _jsapiTicketExp = Date.now() + (data.data.expire - 300) * 1000;
+  return _jsapiTicket!;
+}
+
+// 飞书 JSAPI 签名：sha1(jsapi_ticket=..&noncestr=..&timestamp=..&url=..)
+async function handleJsapiConfig(request: Request): Promise<Response> {
+  const url = getQuery(request).get('url') || `${APP_URL}/`;
+  try {
+    const ticket = await getJsapiTicket();
+    const nonceStr = Math.random().toString(36).slice(2);
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    const raw = `jsapi_ticket=${ticket}&noncestr=${nonceStr}&timestamp=${timestamp}&url=${url}`;
+    const signature = createHash('sha1').update(raw).digest('hex');
+    return success({
+      appId: APP_ID,
+      timestamp,
+      nonceStr,
+      signature,
+      jsApiList: ['requestAccess', 'requestAuthCode'],
+    });
+  } catch (err: any) {
+    console.error('JSAPI 配置失败:', err);
+    return error(err?.message || '获取 JSAPI 配置失败');
+  }
+}
+
 // ?action=exchange&code=xxx → 返回 { loggedIn, user, token }（JSON，不跳转）
 async function handleExchange(request: Request): Promise<Response> {
   const code = getQuery(request).get('code');
@@ -195,6 +237,8 @@ export default {
     switch (action) {
       case 'login-url':
         return await handleLoginUrl();
+      case 'jsapi-config':
+        return await handleJsapiConfig(request);
       case 'me':
         return await handleMe(request);
       case 'logout':

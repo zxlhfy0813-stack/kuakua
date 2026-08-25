@@ -122,7 +122,7 @@ export const KuakuaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [isApaas, refresh]);
 
-  // 飞书客户端内打开时免登（官方 step-3：h5sdk.ready → tt.requestAccess/requestAuthCode）
+  // 飞书客户端内打开时免登（先 JSAPI 鉴权，再 h5sdk.ready → tt.requestAccess/requestAuthCode）
   useEffect(() => {
     if (isApaas) return;
     const { user: cachedUser, token } = readSession();
@@ -130,7 +130,7 @@ export const KuakuaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const w = window as any;
     if (!w.h5sdk || typeof w.h5sdk.ready !== 'function') return;
 
-    w.h5sdk.ready(() => {
+    const doFreeLogin = () => {
       const tt = w.tt;
       if (!tt) {
         setLoading(false);
@@ -171,7 +171,26 @@ export const KuakuaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       } else {
         requestAuthCode();
       }
-    });
+    };
+
+    // 先做 JSAPI 鉴权
+    fetch(`/api/auth?action=jsapi-config&url=${encodeURIComponent(window.location.href)}`)
+      .then((r) => r.json())
+      .then((cfg: any) => {
+        if (cfg && cfg.signature && typeof w.h5sdk.config === 'function') {
+          w.h5sdk.config({
+            appId: cfg.appId,
+            timestamp: cfg.timestamp,
+            nonceStr: cfg.nonceStr,
+            signature: cfg.signature,
+            jsApiList: cfg.jsApiList || ['requestAccess', 'requestAuthCode'],
+          });
+        }
+        w.h5sdk.ready(() => doFreeLogin());
+      })
+      .catch(() => {
+        w.h5sdk.ready(() => doFreeLogin());
+      });
   }, [isApaas]);
 
   // 妙搭运行时：把平台用户同步进来
