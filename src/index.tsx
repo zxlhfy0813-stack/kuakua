@@ -7,6 +7,7 @@ import RoutesComponent from './app.tsx';
 import './index.css';
 import { createPortal } from 'react-dom';
 import { Toaster } from '@/components/ui/sonner';
+import { KuakuaAuthProvider } from './auth.tsx';
 
 // 飞书 SDK 组件
 import { AppContainer } from '@lark-apaas/client-toolkit/components/AppContainer';
@@ -39,8 +40,10 @@ const MainApp = () => {
             </div>
           )}
         >
-          <RoutesComponent />
-          {createPortal(<Toaster />, document.body)}
+          <KuakuaAuthProvider>
+            <RoutesComponent />
+            {createPortal(<Toaster />, document.body)}
+          </KuakuaAuthProvider>
         </ErrorBoundary>
       </AppContainer>
     </BrowserRouter>

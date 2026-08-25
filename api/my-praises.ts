@@ -1,5 +1,6 @@
 ﻿import { bitableListRecords, bitableDeleteRecord } from './_lib/feishu.js';
 import { FIELD_NAMES, PRAISE_TYPE_REVERSE } from './_lib/constants.js';
+import { getSessionUser } from './_lib/session.js';
 import {
   success,
   error,
@@ -44,8 +45,8 @@ export default {
 
 // GET /api/my-praises?action=list&userId=xxx
 async function handleList(request: Request): Promise<Response> {
-  const userId = getQuery(request).get('userId');
-  if (!userId) return error('缺少 userId 参数', 400);
+  const userId = getQuery(request).get('userId') || getSessionUser(request)?.open_id || '';
+  if (!userId) return error('缺少 userId 参数，请先登录', 400);
 
   const { items } = await bitableListRecords(
     PRAISE_TABLE_ID,
@@ -83,8 +84,8 @@ async function handleList(request: Request): Promise<Response> {
 
 // GET /api/my-praises?action=statistics&userId=xxx
 async function handleStatistics(request: Request): Promise<Response> {
-  const userId = getQuery(request).get('userId');
-  if (!userId) return error('缺少 userId 参数', 400);
+  const userId = getQuery(request).get('userId') || getSessionUser(request)?.open_id || '';
+  if (!userId) return error('缺少 userId 参数，请先登录', 400);
 
   const { items } = await bitableListRecords(
     PRAISE_TABLE_ID,
@@ -135,8 +136,8 @@ async function handleDelete(request: Request): Promise<Response> {
 
 // GET /api/my-praises?action=export&userId=xxx
 async function handleExport(request: Request): Promise<Response> {
-  const userId = getQuery(request).get('userId');
-  if (!userId) return error('缺少 userId 参数', 400);
+  const userId = getQuery(request).get('userId') || getSessionUser(request)?.open_id || '';
+  if (!userId) return error('缺少 userId 参数，请先登录', 400);
 
   const { items } = await bitableListRecords(
     PRAISE_TABLE_ID,

@@ -6,6 +6,7 @@
 } from './_lib/feishu.js';
 import { FIELD_NAMES, PRAISE_TYPE_MAP } from './_lib/constants.js';
 import { success, error, extractFields, extractUserId, extractUserName, formatDate, getQuery, getBody } from './_lib/utils.js';
+import { getSessionUser } from './_lib/session.js';
 
 const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
 
@@ -40,18 +41,26 @@ export default {
 // POST /api/praises?action=create
 async function handleCreate(request: Request): Promise<Response> {
   const body = await getBody(request);
-  const { praisedUserId, praisedUserName, type, content, likeCount = 1 } = body;
+  const praisedUser = body.praisedUser || body.praisedUserId || '';
+  const { type, content, likeCount = 1 } = body;
 
-  if (!praisedUserId || !content) {
+  if (!praisedUser || !content) {
     return error('缺少必填字段', 400);
   }
 
   const fields: Record<string, any> = {
-    [FIELD_NAMES.PRAISED_USER]: praisedUserId,
+    [FIELD_NAMES.PRAISED_USER]: [{ id: praisedUser }],
     [FIELD_NAMES.CONTENT]: content,
     [FIELD_NAMES.LIKE_COUNT]: likeCount,
     [FIELD_NAMES.CREATED_AT]: Date.now(),
   };
+
+  const me = getSessionUser(request);
+  if (me) {
+    fields[FIELD_NAMES.PRAISER] = [{ id: me.open_id }];
+  } else if (body.praiser) {
+    fields[FIELD_NAMES.PRAISER] = [{ id: body.praiser }];
+  }
 
   if (type && PRAISE_TYPE_MAP[type]) {
     fields[FIELD_NAMES.PRAISE_TYPE] = PRAISE_TYPE_MAP[type];

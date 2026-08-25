@@ -1,6 +1,7 @@
 ﻿import { bitableListRecords } from './_lib/feishu.js';
 import { FIELD_NAMES, PRAISE_TYPE_REVERSE } from './_lib/constants.js';
 import { success, error, extractFields, extractUserId, extractUserName, formatDate, getWeekStart, getQuery } from './_lib/utils.js';
+import { getSessionUser } from './_lib/session.js';
 
 const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
 
@@ -14,8 +15,8 @@ export default {
 
     try {
       switch (action) {
-        case 'statistics':
-          return await handleStatistics();
+      case 'statistics':
+        return await handleStatistics(request);
         case 'feeds':
           return await handleFeeds(request);
         case 'top5':
@@ -31,7 +32,7 @@ export default {
 };
 
 // GET /api/home?action=statistics
-async function handleStatistics(): Promise<Response> {
+async function handleStatistics(request: Request): Promise<Response> {
   const allItems: any[] = [];
   let pageToken: string | undefined;
   let hasMore = true;
@@ -45,16 +46,23 @@ async function handleStatistics(): Promise<Response> {
   }
 
   const weekStart = getWeekStart();
-  const thisWeekPraises = allItems.filter((item) => {
+  const me = getSessionUser(request)?.open_id;
+  let thisWeekCount = 0;
+  let myReceivedCount = 0;
+  allItems.forEach((item) => {
     const fields = extractFields(item);
     const createdAt = fields[FIELD_NAMES.CREATED_AT];
-    if (!createdAt) return false;
-    return new Date(createdAt).getTime() >= weekStart;
+    const createdAtTs = createdAt ? new Date(createdAt).getTime() : 0;
+    if (createdAtTs >= weekStart) thisWeekCount += 1;
+    if (me && extractUserId(fields[FIELD_NAMES.PRAISED_USER]) === me) {
+      myReceivedCount += 1;
+    }
   });
 
   return success({
     totalCount: allItems.length,
-    thisWeekCount: thisWeekPraises.length,
+    weekAddedCount: thisWeekCount,
+    myReceivedCount,
   });
 }
 

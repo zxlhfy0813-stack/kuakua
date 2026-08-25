@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
-import { useCurrentUserProfile } from '@lark-apaas/client-toolkit/hooks/useCurrentUserProfile';
+import { useKuakuaAuth } from '@/auth';
 import { UserSelect } from '@client/src/components/business-ui/user-select';
 import { UserDisplay } from '@client/src/components/business-ui/user-display';
 import { listUsersByIds } from '@client/src/components/business-ui/api/users/service';
@@ -65,7 +65,7 @@ const getTypeOption = (
   PRAISE_TYPE_OPTIONS.find((opt: PraiseTypeOption) => opt.key === type);
 
 const SendPage: React.FC = () => {
-  const userInfo = useCurrentUserProfile();
+  const { user } = useKuakuaAuth();
 
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [recentUsers, setRecentUsers] = useState<{ userId: string; name: string }[]>([]);
@@ -426,7 +426,9 @@ const SendPage: React.FC = () => {
                       )}
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span>来自</span>
-                        <UserDisplay userId={userInfo.user_id ?? ''} size="small" />
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-sm text-card-foreground">
+                          {user?.name || '游客'}
+                        </span>
                       </div>
                     </div>
                   ) : (

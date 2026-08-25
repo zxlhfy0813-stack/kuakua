@@ -3,6 +3,7 @@ import { myPraisesApi } from '@client/src/api';
 import { logger } from '@lark-apaas/client-toolkit/logger';
 import dayjs from 'dayjs';
 import type { MyPraiseItem, PraiseType } from '@shared/api.interface';
+import { useKuakuaAuth } from '@/auth';
 import React from 'react';
 
 // 简单的文本用户展示组件
@@ -58,6 +59,7 @@ const FILTER_OPTIONS: Array<{ value: PraiseType | 'all'; label: string }> = [
 const PAGE_SIZE = 20;
 
 const MyPraisesPage = () => {
+  const { user, loading, login } = useKuakuaAuth();
   const [totalReceived, setTotalReceived] = useState<number>(0);
   const [weekAdded, setWeekAdded] = useState<number>(0);
   const [monthAdded, setMonthAdded] = useState<number>(0);
@@ -119,6 +121,21 @@ const MyPraisesPage = () => {
   };
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  if (!loading && !user) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4">
+        <p className="text-lg font-medium text-foreground">请先登录</p>
+        <p className="text-sm text-muted-foreground">登录后即可查看你收到的夸夸</p>
+        <button
+          onClick={login}
+          className="rounded-lg bg-primary px-5 py-2 text-sm font-medium text-primary-foreground"
+        >
+          飞书扫码登录
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

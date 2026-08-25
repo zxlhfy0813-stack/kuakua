@@ -49,10 +49,8 @@ import {
 } from "@/components/ui/alert-dialog";
 
 // 飞书 SDK hooks - 在非飞书环境中安全调用
-import { useCurrentUserProfile } from "@lark-apaas/client-toolkit/hooks/useCurrentUserProfile";
 import { useAppInfo } from "@lark-apaas/client-toolkit/hooks/useAppInfo";
-import { getDataloom } from "@lark-apaas/client-toolkit/dataloom";
-import { logger } from "@lark-apaas/client-toolkit/logger";
+import { useKuakuaAuth } from "@/auth";
 
 const ADMIN_USER_ID = '1855639467108443';
 
@@ -75,14 +73,9 @@ function LayoutContent() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
-  // 安全调用飞书 hooks，非飞书环境返回 fallback
-  let userInfo: any;
+  const { user, login, logout } = useKuakuaAuth();
+
   let appInfo: any;
-  try {
-    userInfo = useCurrentUserProfile();
-  } catch {
-    userInfo = { user_id: "guest", name: "游客", avatar: undefined };
-  }
   try {
     appInfo = useAppInfo();
   } catch {
@@ -93,34 +86,19 @@ function LayoutContent() {
   const activeTitle =
     [...NAV_ITEMS, ...ADMIN_NAV_ITEMS].find((item) => item.path === pathname)?.label ?? "夸夸平台";
 
-  const isAdmin = userInfo?.user_id === ADMIN_USER_ID;
+  const isAdmin = user?.open_id === ADMIN_USER_ID;
 
-  const handleLogout = async () => {
-    try {
-      const dataloom = await getDataloom();
-      const result = await dataloom.service.session.signOut();
-      if (result.error) {
-        logger.error("退出登录失败:", result.error.message);
-        return;
-      }
-      window.location.reload();
-    } catch (err) {
-      logger.error("退出登录异常:", String(err));
-    }
+  const handleLogout = () => {
+    logout();
   };
 
-  const handleLogin = async () => {
-    try {
-      const dataloom = await getDataloom();
-      dataloom.service.session.redirectToLogin();
-    } catch {
-      // 非飞书环境，忽略
-    }
+  const handleLogin = () => {
+    login();
   };
 
-  const isLoggedIn = !!userInfo?.user_id && userInfo?.user_id !== "guest";
-  const userName = userInfo?.name ?? "游客";
-  const userAvatar = isLoggedIn ? userInfo?.avatar : GUEST_AVATAR;
+  const isLoggedIn = !!user;
+  const userName = user?.name ?? "游客";
+  const userAvatar = isLoggedIn ? user?.avatar : GUEST_AVATAR;
 
   return (
     <>
