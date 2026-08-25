@@ -7,6 +7,7 @@ import { Users, TrendingUp, Heart, Send, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosForBackend } from '@lark-apaas/client-toolkit/utils/getAxiosForBackend';
 import { Button } from '@client/src/components/ui/button';
+import { useKuakuaAuth } from '@/auth';
 import { logger } from '@lark-apaas/client-toolkit/logger';
 import type {
   HomeStatisticsResponse,
@@ -189,6 +190,7 @@ async function fetchHomeTop5(): Promise<HomeTop5Response> {
 }
 
 const HomePage: React.FC = () => {
+  const { user, loading, login } = useKuakuaAuth();
   const [stats, setStats] = useState<HomeStatisticsResponse | null>(null);
   const [feeds, setFeeds] = useState<HomeFeedItem[]>([]);
   const [top5, setTop5] = useState<Top5Item[]>([]);
@@ -286,6 +288,17 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {!loading && !user && (
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-primary/20 bg-primary/5 p-4">
+          <div className="text-sm text-foreground">
+            你还没有登录。登录后可发送夸夸、查看“我的夸夸”。
+          </div>
+          <Button className="shrink-0" onClick={login}>
+            <Send className="mr-2 h-4 w-4" />
+            飞书登录
+          </Button>
+        </div>
+      )}
       {/* 指标卡区域 */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <StatCard

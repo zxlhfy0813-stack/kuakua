@@ -164,77 +164,79 @@ function LayoutContent() {
         <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton size="lg" tooltip={userName}>
-                    <Avatar className="size-6">
-                      <AvatarImage src={userAvatar} alt={userName} />
-                      <AvatarFallback className="text-xs">
-                        {userName.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="group-data-[collapsible=icon]:hidden">
-                      {userName}
-                    </span>
-                  </SidebarMenuButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  side="right"
-                  align="end"
-                  className="w-48"
-                >
-                  {isLoggedIn ? (
-                    <>
-                      <div className="px-2 py-1.5 text-sm">
-                        <p className="font-medium">{userName}</p>
-                      </div>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => navigate("/my-praises")}>
-                        <Heart className="mr-2 size-4" />
-                        我的夸夸
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate("/send")}>
-                        <Send className="mr-2 size-4" />
-                        发送夸夸
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate("/wall")}>
-                        <LayoutGrid className="mr-2 size-4" />
-                        夸夸墙
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <DropdownMenuItem
-                            onSelect={(e: Event) => e.preventDefault()}
-                          >
-                            <LogOut className="mr-2 size-4" />
-                            退出登录
-                          </DropdownMenuItem>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>确认退出登录？</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              退出后需要重新登录才能使用夸夸平台
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>取消</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleLogout}>
-                              确认退出
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </>
-                  ) : (
-                    <DropdownMenuItem onClick={handleLogin}>
-                      <LogIn className="mr-2 size-4" />
-                      登录
+              {isLoggedIn ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <SidebarMenuButton size="lg" tooltip={userName}>
+                      <Avatar className="size-6">
+                        <AvatarImage src={userAvatar} alt={userName} />
+                        <AvatarFallback className="text-xs">
+                          {userName.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="group-data-[collapsible=icon]:hidden">
+                        {userName}
+                      </span>
+                    </SidebarMenuButton>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    side="right"
+                    align="end"
+                    className="w-48"
+                  >
+                    <div className="px-2 py-1.5 text-sm">
+                      <p className="font-medium">{userName}</p>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate("/my-praises")}>
+                      <Heart className="mr-2 size-4" />
+                      我的夸夸
                     </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <DropdownMenuItem onClick={() => navigate("/send")}>
+                      <Send className="mr-2 size-4" />
+                      发送夸夸
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/wall")}>
+                      <LayoutGrid className="mr-2 size-4" />
+                      夸夸墙
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <DropdownMenuItem
+                          onSelect={(e: Event) => e.preventDefault()}
+                        >
+                          <LogOut className="mr-2 size-4" />
+                          退出登录
+                        </DropdownMenuItem>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>确认退出登录？</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            退出后需要重新登录才能使用夸夸平台
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>取消</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleLogout}>
+                            确认退出
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <SidebarMenuButton size="lg" asChild onClick={handleLogin}>
+                  <button className="w-full justify-start gap-2">
+                    <LogIn className="size-4" />
+                    <span className="group-data-[collapsible=icon]:hidden">
+                      登录
+                    </span>
+                  </button>
+                </SidebarMenuButton>
+              )}
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>
