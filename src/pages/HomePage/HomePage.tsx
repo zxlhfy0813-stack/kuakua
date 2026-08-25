@@ -98,9 +98,9 @@ const isValidUserId = (id: string): boolean => {
 const FeedCard: React.FC<FeedCardProps> = ({ item }) => (
   <div className="rounded-xl bg-card p-5 shadow-sm transition-shadow duration-200 hover:shadow-md">
     <div className="flex items-center gap-2 text-sm">
-      <UserDisplay value={item.praiser as any} size="small" showUserProfile={false} />
+      <UserDisplay value={item.praiser as any} size="small" />
       <span className="text-muted-foreground">夸了</span>
-      <UserDisplay value={item.praisedUser as any} size="small" showUserProfile={false} />
+      <UserDisplay value={item.praisedUser as any} size="small" />
     </div>
     {/* <p className="mt-3 text-sm leading-relaxed text-foreground">
       {item.content}

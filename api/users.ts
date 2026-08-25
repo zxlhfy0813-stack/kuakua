@@ -64,31 +64,31 @@ async function fetchAllUsers(): Promise<any[]> {
 
 // GET /api/users?action=search&query=xxx&pageSize=20
 // 说明：/search/v1/user 需要「用户」token，这里统一用通讯录列表 + 本地筛选来实现
+// 当 query 为空时，返回全部通讯录成员（供“+”号选择）
 async function handleSearch(request: Request): Promise<Response> {
   const query = getQuery(request);
   const queryStr = (query.get('query') || '').trim();
-  const pageSize = Math.min(Number(query.get('pageSize')) || 20, 100);
-
-  if (!queryStr) {
-    return success({ userList: [] });
-  }
+  const pageSize = Math.min(Number(query.get('pageSize')) || 100, 200);
 
   try {
     const users = await fetchAllUsers();
-    const lowered = queryStr.toLowerCase();
 
-    const matched = users.filter((user: any) => {
-      const name = getText(user.name).toLowerCase();
-      const enName = (user.en_name || '').toLowerCase();
-      const email = (user.email || '').toLowerCase();
-      const mobile = user.mobile || '';
-      return (
-        name.includes(lowered) ||
-        enName.includes(lowered) ||
-        email.includes(lowered) ||
-        mobile.includes(queryStr)
-      );
-    });
+    let matched = users;
+    if (queryStr) {
+      const lowered = queryStr.toLowerCase();
+      matched = users.filter((user: any) => {
+        const name = getText(user.name).toLowerCase();
+        const enName = (user.en_name || '').toLowerCase();
+        const email = (user.email || '').toLowerCase();
+        const mobile = user.mobile || '';
+        return (
+          name.includes(lowered) ||
+          enName.includes(lowered) ||
+          email.includes(lowered) ||
+          mobile.includes(queryStr)
+        );
+      });
+    }
 
     return success({
       userList: matched.slice(0, pageSize).map((user: any) => ({

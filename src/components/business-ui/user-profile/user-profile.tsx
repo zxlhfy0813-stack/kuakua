@@ -181,20 +181,24 @@ function UserProfile(props: UserProfileProps) {
   const [error, setError] = useState<boolean>(false);
 
   const onAuthError = useCallback(() => {
-    globalThis.webComponent.onAuthError(function (error: Error) {
-      const errorMessage = JSON.parse(error.message);
-      // 存在token过期情况，但后端无法识别，需要前端这边主动识别error，并进行鉴权重定向
-      if (
-        errorMessage?.msg?.code === 20442 &&
-        errorMessage?.msg?.msg === 'jsapi-ticket not exist'
-      ) {
-        globalThis.location.replace(redirectURLRef.current);
-      }
-    });
+    try {
+      globalThis.webComponent.onAuthError(function (error: Error) {
+        const errorMessage = JSON.parse(error.message);
+        // 存在token过期情况，但后端无法识别，需要前端这边主动识别error，并进行鉴权重定向
+        if (
+          errorMessage?.msg?.code === 20442 &&
+          errorMessage?.msg?.msg === 'jsapi-ticket not exist'
+        ) {
+          globalThis.location.replace(redirectURLRef.current);
+        }
+      });
 
-    globalThis.webComponent.onError(function (error: Error) {
-      logger.info('webComponent onError', error);
-    });
+      globalThis.webComponent.onError(function (error: Error) {
+        logger.info('webComponent onError', error);
+      });
+    } catch {
+      // 独立站没有 webComponent，忽略（名片用自研数据渲染）
+    }
   }, []);
 
   // 按需注入飞书 H5 JS SDK，仅在组件使用时加载

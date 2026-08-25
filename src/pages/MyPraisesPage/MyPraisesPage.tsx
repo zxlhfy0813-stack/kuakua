@@ -255,7 +255,7 @@ const PraiseCard = ({ item, isLast }: PraiseCardProps) => {
     >
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <UserDisplay value={item.praiser as any} size="small" showUserProfile={false} />
+          <UserDisplay value={item.praiser as any} size="small" />
         </div>
         {typeConfig && (
           <span

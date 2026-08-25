@@ -31,7 +31,7 @@ export function useFetchData<T>({
   const [isSuccess, setIsSuccess] = useState(false);
 
   const fetchData = useCallback(async () => {
-    if (!enabled || search.trim() === '') {
+    if (!enabled) {
       setData([]);
       setIsSuccess(true);
       return;
@@ -57,7 +57,7 @@ export function useFetchData<T>({
   }, [enabled, search, fetchFn]);
 
   useEffect(() => {
-    if (enabled && search.trim() !== '') {
+    if (enabled) {
       fetchData();
     } else {
       setData(undefined);
