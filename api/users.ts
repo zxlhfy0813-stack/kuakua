@@ -32,63 +32,75 @@ export default {
   },
 };
 
+// 取用户名的 I18nText 文本
+function getText(name: any): string {
+  if (!name) return '';
+  if (typeof name === 'string') return name;
+  return name.zh_cn || name.en_us || name.en_name || '';
+}
+
+// 拉取通讯录全部用户（分页，上限 1000，若 org 更大可调）
+async function fetchAllUsers(): Promise<any[]> {
+  const all: any[] = [];
+  let pageToken: string | undefined;
+  let count = 0;
+  const MAX = 1000;
+  while (count < MAX) {
+    const pageSize = Math.min(200, MAX - count);
+    const params = new URLSearchParams();
+    params.set('page_size', String(pageSize));
+    params.set('user_id_type', 'open_id');
+    if (pageToken) params.set('page_token', pageToken);
+
+    const data = await feishuRequest('GET', `/contact/v3/users?${params}`);
+    const items = data.items || [];
+    all.push(...items);
+    count += items.length;
+    if (!data.has_more || !data.page_token) break;
+    pageToken = data.page_token;
+  }
+  return all;
+}
+
 // GET /api/users?action=search&query=xxx&pageSize=20
+// 说明：/search/v1/user 需要「用户」token，这里统一用通讯录列表 + 本地筛选来实现
 async function handleSearch(request: Request): Promise<Response> {
   const query = getQuery(request);
-  const queryStr = query.get('query') || '';
+  const queryStr = (query.get('query') || '').trim();
   const pageSize = Math.min(Number(query.get('pageSize')) || 20, 100);
 
-  if (!queryStr.trim()) {
+  if (!queryStr) {
     return success({ userList: [] });
   }
 
   try {
-    // 使用飞书通讯录搜索接口
-    const data = await feishuRequest(
-      'POST',
-      '/search/v1/user',
-      {
-        query: queryStr,
-        page_size: pageSize,
-        query_range: 'user',
-      },
-    );
+    const users = await fetchAllUsers();
+    const lowered = queryStr.toLowerCase();
+
+    const matched = users.filter((user: any) => {
+      const name = getText(user.name).toLowerCase();
+      const enName = (user.en_name || '').toLowerCase();
+      const email = (user.email || '').toLowerCase();
+      const mobile = user.mobile || '';
+      return (
+        name.includes(lowered) ||
+        enName.includes(lowered) ||
+        email.includes(lowered) ||
+        mobile.includes(queryStr)
+      );
+    });
 
     return success({
-      userList: (data.users || []).map((user: any) => ({
-        user_id: user.user_id || user.open_id,
-        name: user.name || {},
+      userList: matched.slice(0, pageSize).map((user: any) => ({
+        user_id: user.open_id || user.user_id,
+        name: user.name || { zh_cn: user.en_name },
         avatar: user.avatar || {},
         department_ids: user.department_ids || [],
       })),
     });
   } catch (err: any) {
-    console.error('搜索用户失败，尝试使用通讯录接口:', err);
-    
-    // fallback: 使用通讯录批量获取接口
-    try {
-      const data = await feishuRequest(
-        'GET',
-        `/contact/v3/users?page_size=${pageSize}&user_id_type=user_id`,
-      );
-
-      const users = (data.items || []).filter((user: any) => {
-        const name = user.name || '';
-        return name.includes(queryStr);
-      });
-
-      return success({
-        userList: users.map((user: any) => ({
-          user_id: user.user_id,
-          name: { zh_cn: user.name },
-          avatar: { avatar_72: user.avatar?.avatar_72 },
-          department_ids: user.department_ids || [],
-        })),
-      });
-    } catch (fallbackErr: any) {
-      console.error('通讯录接口也失败:', fallbackErr);
-      return success({ userList: [] });
-    }
+    console.error('搜索用户失败:', err);
+    return error(err?.message || '搜索用户失败');
   }
 }
 
@@ -111,12 +123,13 @@ async function handleBatchGet(request: Request): Promise<Response> {
         try {
           const data = await feishuRequest(
             'GET',
-            `/contact/v3/users/${userId}?user_id_type=user_id`,
+            `/contact/v3/users/${userId}?user_id_type=open_id`,
           );
           results[userId] = {
-            user_id: data.user?.user_id || userId,
-            name: { zh_cn: data.user?.name || '未知用户' },
+            user_id: data.user?.open_id || data.user?.user_id || userId,
+            name: { zh_cn: getText(data.user?.name) || '未知用户' },
             avatar: { avatar_72: data.user?.avatar?.avatar_72 || '' },
+            email: data.user?.email || '',
           };
         } catch {
           results[userId] = {
