@@ -130,8 +130,11 @@ async function handleBatchGet(request: Request): Promise<Response> {
         ? {
             user_id: u.open_id || u.user_id || id,
             name: { zh_cn: getText(u.name) || u.en_name || id },
-            avatar: { avatar_72: u.avatar?.avatar_72 || '' },
+            en_name: u.en_name || '',
             email: u.email || '',
+            job_title: u.job_title || '',
+            department_ids: u.department_ids || [],
+            avatar: { avatar_72: u.avatar?.avatar_72 || '' },
           }
         : {
             user_id: id,

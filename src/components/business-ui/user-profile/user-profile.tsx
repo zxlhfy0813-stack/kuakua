@@ -351,6 +351,18 @@ function SimpleUserProfile(props: {
                 </Badge>
               )}
             </div>
+            {userProfileInfo.en_name && (
+              <div className="mt-6 grid grid-cols-[84px_1fr] gap-y-3 text-sm">
+                <div className="text-muted-foreground">英文名</div>
+                <div className="text-foreground">{(userProfileInfo as any).en_name}</div>
+              </div>
+            )}
+            {userProfileInfo.job_title && (
+              <div className="mt-3 grid grid-cols-[84px_1fr] gap-y-3 text-sm">
+                <div className="text-muted-foreground">职位</div>
+                <div className="text-foreground">{(userProfileInfo as any).job_title}</div>
+              </div>
+            )}
             {userProfileInfo.email && (
               <div className="mt-6 grid grid-cols-[84px_1fr] gap-y-3 text-sm">
                 <div className="text-muted-foreground">邮箱</div>

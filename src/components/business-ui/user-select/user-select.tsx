@@ -38,6 +38,7 @@ function createUsersFetcher(options: { accountType?: AccountType; pageSize?: num
       return {
         items: userList.map((user: any) => ({
           id: user.user_id || user.open_id || '',
+          user_id: user.user_id || user.open_id || '',
           name: user.name?.zh_cn || user.name?.en_us || user.name || '',
           avatar: user.avatar?.avatar_72 || user.avatar?.avatar_640 || '',
           raw: user,

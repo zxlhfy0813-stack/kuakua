@@ -22,9 +22,11 @@ export async function fetchUserProfile(
     const name = info?.name?.zh_cn || info?.name?.en_us || info?.name || userId;
     const avatar = info?.avatar?.avatar_72 || info?.avatar?.avatar_240 || '';
     const email = info?.email || '';
+    const en_name = info?.en_name || '';
+    const job_title = info?.job_title || '';
     return {
       useLarkCard: false,
-      userProfileInfo: { name, avatar, email },
+      userProfileInfo: { name, avatar, email, en_name, job_title },
     } as unknown as UserProfileData;
   } catch (e) {
     throw new Error('获取名片失败');
