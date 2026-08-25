@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { axiosForBackend } from '@lark-apaas/client-toolkit/utils/getAxiosForBackend';
+import { useCurrentUserProfile } from '@lark-apaas/client-toolkit/hooks/useCurrentUserProfile';
 
 export interface KuakuaUser {
   open_id: string;
@@ -27,11 +28,38 @@ const Ctx = createContext<AuthCtx>({
 
 export const useKuakuaAuth = () => useContext(Ctx);
 
+// 是否运行在妙搭/apaas 运行时（此时由平台自动提供登录态，无需扫码）
+function isApaasRuntime(): boolean {
+  if (typeof window === 'undefined') return false;
+  const w = window as any;
+  if (w._IS_Spark_RUNTIME) return true;
+  if ((process as any)?.env?.runtimeMode === 'fullstack') return true;
+  return false;
+}
+
+function toUser(u: any): KuakuaUser | null {
+  const open_id = u?.open_id || u?.user_id || u?.lark_user_id || u?.uid || '';
+  if (!open_id) return null;
+  return {
+    open_id,
+    name: u?.name || u?.userName || '',
+    avatar: u?.avatar || u?.userAvatar || '',
+    email: u?.email || '',
+    access_token: u?.access_token || '',
+  };
+}
+
 export const KuakuaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<KuakuaUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const isApaas = React.useMemo(() => isApaasRuntime(), []);
+
+  // 妙搭/apaas 运行时：直接用平台的当前用户（自动免登）
+  const apaasUser = useCurrentUserProfile();
+
   const refresh = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await axiosForBackend({
         url: '/api/auth',
@@ -51,8 +79,19 @@ export const KuakuaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, []);
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    if (!isApaas) {
+      refresh();
+    }
+  }, [isApaas, refresh]);
+
+  // 妙搭运行时：把平台用户同步进来
+  useEffect(() => {
+    if (isApaas) {
+      const u = toUser(apaasUser);
+      setUser(u);
+      setLoading(false);
+    }
+  }, [isApaas, apaasUser]);
 
   const login = useCallback(async () => {
     try {
