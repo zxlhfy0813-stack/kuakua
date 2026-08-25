@@ -7,8 +7,9 @@
 import { FIELD_NAMES, PRAISE_TYPE_MAP } from './_lib/constants.js';
 import { success, error, extractFields, extractUserId, extractUserName, formatDate, getQuery, getBody } from './_lib/utils.js';
 import { getSessionUser } from './_lib/session.js';
+import { getSource } from './_lib/datasource.js';
 
-const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
+const PRAISE_TABLE_ID_DEFAULT = process.env.PRAISE_TABLE_ID || 'tblpraise';
 
 export default {
   async fetch(request: Request): Promise<Response> {
@@ -40,6 +41,7 @@ export default {
 
 // POST /api/praises?action=create
 async function handleCreate(request: Request): Promise<Response> {
+  const src = getSource(request);
   const body = await getBody(request);
   const praisedUser = body.praisedUser || body.praisedUserId || '';
   const { type, content, likeCount = 1 } = body;
@@ -66,7 +68,7 @@ async function handleCreate(request: Request): Promise<Response> {
     fields[FIELD_NAMES.PRAISE_TYPE] = PRAISE_TYPE_MAP[type];
   }
 
-  const record = await bitableCreateRecord(PRAISE_TABLE_ID, fields);
+  const record = await bitableCreateRecord(src.tableId, fields, src.appToken);
 
   return success({
     id: record.record_id,
@@ -76,10 +78,11 @@ async function handleCreate(request: Request): Promise<Response> {
 
 // GET /api/praises?action=get-by-id&id=xxx
 async function handleGetById(request: Request): Promise<Response> {
+  const src = getSource(request);
   const id = getQuery(request).get('id');
   if (!id) return error('缺少 id 参数', 400);
 
-  const records = await bitableBatchGetRecords(PRAISE_TABLE_ID, [id]);
+  const records = await bitableBatchGetRecords(src.tableId, [id], src.appToken);
   if (!records.length) return error('记录不存在', 404);
 
   const item = records[0];
@@ -98,10 +101,11 @@ async function handleGetById(request: Request): Promise<Response> {
 
 // GET /api/praises?action=recent-praised&userId=xxx
 async function handleRecentPraised(request: Request): Promise<Response> {
+  const src = getSource(request);
   const userId = getQuery(request).get('userId');
   if (!userId) return error('缺少 userId 参数', 400);
 
-  const { items } = await bitableListRecords(PRAISE_TABLE_ID, undefined, undefined, undefined, 50);
+  const { items } = await bitableListRecords(src.tableId, undefined, undefined, undefined, 50, src.appToken);
 
   const praisedByMe = items
     .filter((item: any) => {
@@ -129,10 +133,11 @@ async function handleRecentPraised(request: Request): Promise<Response> {
 
 // DELETE /api/praises?action=delete&recordId=xxx
 async function handleDelete(request: Request): Promise<Response> {
+  const src = getSource(request);
   const recordId = getQuery(request).get('recordId');
   if (!recordId) return error('缺少 recordId 参数', 400);
 
-  await bitableDeleteRecord(PRAISE_TABLE_ID, recordId);
+  await bitableDeleteRecord(src.tableId, recordId, src.appToken);
 
   return success({ success: true });
 }

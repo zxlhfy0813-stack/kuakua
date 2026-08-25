@@ -1,8 +1,7 @@
 ﻿import { bitableListRecords } from './_lib/feishu.js';
 import { FIELD_NAMES, PRAISE_TYPE_REVERSE } from './_lib/constants.js';
 import { success, error, extractFields, extractUserId, extractUserName, formatDate, getQuery } from './_lib/utils.js';
-
-const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
+import { getSource } from './_lib/datasource.js';
 
 export default {
   async fetch(request: Request): Promise<Response> {
@@ -12,12 +11,14 @@ export default {
 
     try {
       const query = getQuery(request);
+      const src = getSource(request);
       const { items, pageToken, hasMore } = await bitableListRecords(
-        PRAISE_TABLE_ID,
+        src.tableId,
         undefined,
         undefined,
         query.get('cursor') || undefined,
         Number(query.get('pageSize')) || 20,
+        src.appToken,
       );
 
       const wallItems = items.map((item: any) => {

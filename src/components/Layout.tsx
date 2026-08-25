@@ -8,6 +8,7 @@ import {
   LogOut,
   LogIn,
   Shield,
+  Database,
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -64,6 +65,7 @@ const NAV_ITEMS = [
 
 const ADMIN_NAV_ITEMS = [
   { path: "/role-management", label: "角色管理", icon: Shield },
+  { path: "/data-source", label: "数据源", icon: Database },
 ];
 
 const GUEST_AVATAR =
@@ -156,6 +158,18 @@ function LayoutContent() {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === "/data-source"}
+                    tooltip="数据源"
+                  >
+                    <Link to="/data-source">
+                      <Database className="size-4" />
+                      <span>数据源</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

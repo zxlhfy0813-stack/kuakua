@@ -80,6 +80,7 @@ export async function bitableListRecords(
   sort?: string[],
   pageToken?: string,
   pageSize: number = 100,
+  appToken?: string,
 ): Promise<{ items: any[]; pageToken?: string; hasMore: boolean }> {
   const params = new URLSearchParams();
   params.set('page_size', String(pageSize));
@@ -87,9 +88,10 @@ export async function bitableListRecords(
   if (filter) params.set('filter', filter);
   if (sort) params.set('sort', JSON.stringify(sort));
 
+  const app = appToken || BITABLE_APP_TOKEN;
   const data = await feishuRequest(
     'GET',
-    `/bitable/v1/apps/${BITABLE_APP_TOKEN}/tables/${tableId}/records?${params}`,
+    `/bitable/v1/apps/${app}/tables/${tableId}/records?${params}`,
   );
 
   return {
@@ -105,10 +107,12 @@ export async function bitableListRecords(
 export async function bitableCreateRecord(
   tableId: string,
   fields: Record<string, any>,
+  appToken?: string,
 ): Promise<any> {
+  const app = appToken || BITABLE_APP_TOKEN;
   const data = await feishuRequest(
     'POST',
-    `/bitable/v1/apps/${BITABLE_APP_TOKEN}/tables/${tableId}/records`,
+    `/bitable/v1/apps/${app}/tables/${tableId}/records`,
     { fields },
   );
   return data.record;
@@ -121,10 +125,12 @@ export async function bitableUpdateRecord(
   tableId: string,
   recordId: string,
   fields: Record<string, any>,
+  appToken?: string,
 ): Promise<any> {
+  const app = appToken || BITABLE_APP_TOKEN;
   const data = await feishuRequest(
     'PUT',
-    `/bitable/v1/apps/${BITABLE_APP_TOKEN}/tables/${tableId}/records/${recordId}`,
+    `/bitable/v1/apps/${app}/tables/${tableId}/records/${recordId}`,
     { fields },
   );
   return data.record;
@@ -136,10 +142,12 @@ export async function bitableUpdateRecord(
 export async function bitableDeleteRecord(
   tableId: string,
   recordId: string,
+  appToken?: string,
 ): Promise<void> {
+  const app = appToken || BITABLE_APP_TOKEN;
   await feishuRequest(
     'DELETE',
-    `/bitable/v1/apps/${BITABLE_APP_TOKEN}/tables/${tableId}/records/${recordId}`,
+    `/bitable/v1/apps/${app}/tables/${tableId}/records/${recordId}`,
   );
 }
 
@@ -149,10 +157,12 @@ export async function bitableDeleteRecord(
 export async function bitableBatchGetRecords(
   tableId: string,
   recordIds: string[],
+  appToken?: string,
 ): Promise<any[]> {
+  const app = appToken || BITABLE_APP_TOKEN;
   const data = await feishuRequest(
     'POST',
-    `/bitable/v1/apps/${BITABLE_APP_TOKEN}/tables/${tableId}/records/batch_get`,
+    `/bitable/v1/apps/${app}/tables/${tableId}/records/batch_get`,
     { record_ids: recordIds },
   );
   return data.records || [];

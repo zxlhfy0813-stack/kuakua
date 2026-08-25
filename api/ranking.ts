@@ -1,8 +1,7 @@
 ﻿import { bitableListRecords } from './_lib/feishu.js';
 import { FIELD_NAMES } from './_lib/constants.js';
 import { success, error, extractFields, extractUserId, extractUserName, getWeekStart, getMonthStart, getQuery } from './_lib/utils.js';
-
-const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
+import { getSource } from './_lib/datasource.js';
 
 export default {
   async fetch(request: Request): Promise<Response> {
@@ -28,13 +27,14 @@ export default {
   },
 };
 
-async function getAllPraises() {
+async function getAllPraises(request: Request) {
+  const src = getSource(request);
   const allItems: any[] = [];
   let pageToken: string | undefined;
   let hasMore = true;
 
   while (hasMore) {
-    const result = await bitableListRecords(PRAISE_TABLE_ID, undefined, undefined, pageToken, 100);
+    const result = await bitableListRecords(src.tableId, undefined, undefined, pageToken, 100, src.appToken);
     allItems.push(...result.items);
     hasMore = result.hasMore;
     pageToken = result.pageToken;
@@ -48,7 +48,7 @@ async function handleList(request: Request): Promise<Response> {
   const period = getQuery(request).get('period') || 'week';
   const timeStart = period === 'month' ? getMonthStart() : getWeekStart();
 
-  const allItems = await getAllPraises();
+  const allItems = await getAllPraises(request);
 
   // 按时间段筛选
   const filtered = allItems.filter((item) => {
@@ -91,7 +91,7 @@ async function handleExport(request: Request): Promise<Response> {
   const period = getQuery(request).get('period') || 'week';
   const timeStart = period === 'month' ? getMonthStart() : getWeekStart();
 
-  const allItems = await getAllPraises();
+  const allItems = await getAllPraises(request);
 
   const filtered = allItems.filter((item) => {
     const fields = extractFields(item);

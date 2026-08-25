@@ -1,6 +1,7 @@
 ﻿import { bitableListRecords, bitableDeleteRecord } from './_lib/feishu.js';
 import { FIELD_NAMES, PRAISE_TYPE_REVERSE } from './_lib/constants.js';
 import { getSessionUser } from './_lib/session.js';
+import { getSource } from './_lib/datasource.js';
 import {
   success,
   error,
@@ -13,7 +14,7 @@ import {
   getQuery,
 } from './_lib/utils.js';
 
-const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
+const PRAISE_TABLE_ID_DEFAULT = process.env.PRAISE_TABLE_ID || 'tblpraise';
 
 export default {
   async fetch(request: Request): Promise<Response> {
@@ -45,15 +46,17 @@ export default {
 
 // GET /api/my-praises?action=list&userId=xxx
 async function handleList(request: Request): Promise<Response> {
+  const src = getSource(request);
   const userId = getQuery(request).get('userId') || getSessionUser(request)?.open_id || '';
   if (!userId) return error('缺少 userId 参数，请先登录', 400);
 
   const { items } = await bitableListRecords(
-    PRAISE_TABLE_ID,
+    src.tableId,
     undefined,
     undefined,
     undefined,
     200,
+    src.appToken,
   );
 
   const userPraises = items
@@ -84,15 +87,17 @@ async function handleList(request: Request): Promise<Response> {
 
 // GET /api/my-praises?action=statistics&userId=xxx
 async function handleStatistics(request: Request): Promise<Response> {
+  const src = getSource(request);
   const userId = getQuery(request).get('userId') || getSessionUser(request)?.open_id || '';
   if (!userId) return error('缺少 userId 参数，请先登录', 400);
 
   const { items } = await bitableListRecords(
-    PRAISE_TABLE_ID,
+    src.tableId,
     undefined,
     undefined,
     undefined,
     200,
+    src.appToken,
   );
 
   const userPraises = items.filter((item: any) => {
@@ -126,25 +131,28 @@ async function handleStatistics(request: Request): Promise<Response> {
 
 // DELETE /api/my-praises?action=delete&recordId=xxx
 async function handleDelete(request: Request): Promise<Response> {
+  const src = getSource(request);
   const recordId = getQuery(request).get('recordId');
   if (!recordId) return error('缺少 recordId 参数', 400);
 
-  await bitableDeleteRecord(PRAISE_TABLE_ID, recordId);
+  await bitableDeleteRecord(src.tableId, recordId, src.appToken);
 
   return success({ success: true });
 }
 
 // GET /api/my-praises?action=export&userId=xxx
 async function handleExport(request: Request): Promise<Response> {
+  const src = getSource(request);
   const userId = getQuery(request).get('userId') || getSessionUser(request)?.open_id || '';
   if (!userId) return error('缺少 userId 参数，请先登录', 400);
 
   const { items } = await bitableListRecords(
-    PRAISE_TABLE_ID,
+    src.tableId,
     undefined,
     undefined,
     undefined,
     200,
+    src.appToken,
   );
 
   const userPraises = items

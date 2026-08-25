@@ -2,8 +2,7 @@
 import { FIELD_NAMES, PRAISE_TYPE_REVERSE } from './_lib/constants.js';
 import { success, error, extractFields, extractUserId, extractUserName, formatDate, getWeekStart, getQuery } from './_lib/utils.js';
 import { getSessionUser } from './_lib/session.js';
-
-const PRAISE_TABLE_ID = process.env.PRAISE_TABLE_ID || 'tblpraise';
+import { getSource } from './_lib/datasource.js';
 
 export default {
   async fetch(request: Request): Promise<Response> {
@@ -17,10 +16,10 @@ export default {
       switch (action) {
       case 'statistics':
         return await handleStatistics(request);
-        case 'feeds':
-          return await handleFeeds(request);
-        case 'top5':
-          return await handleTop5();
+      case 'feeds':
+        return await handleFeeds(request);
+      case 'top5':
+        return await handleTop5(request);
         default:
           return error('Unknown action', 400);
       }
@@ -33,13 +32,14 @@ export default {
 
 // GET /api/home?action=statistics
 async function handleStatistics(request: Request): Promise<Response> {
+  const src = getSource(request);
   const allItems: any[] = [];
   let pageToken: string | undefined;
   let hasMore = true;
 
   // 获取所有记录来统计
   while (hasMore) {
-    const result = await bitableListRecords(PRAISE_TABLE_ID, undefined, undefined, pageToken, 100);
+    const result = await bitableListRecords(src.tableId, undefined, undefined, pageToken, 100, src.appToken);
     allItems.push(...result.items);
     hasMore = result.hasMore;
     pageToken = result.pageToken;
@@ -68,16 +68,18 @@ async function handleStatistics(request: Request): Promise<Response> {
 
 // GET /api/home?action=feeds&page=1&pageSize=10
 async function handleFeeds(request: Request): Promise<Response> {
+  const src = getSource(request);
   const query = getQuery(request);
   const page = Number(query.get('page')) || 1;
   const pageSize = Number(query.get('pageSize')) || 10;
 
   const { items, hasMore } = await bitableListRecords(
-    PRAISE_TABLE_ID,
+    src.tableId,
     undefined,
     undefined,
     undefined,
     100,
+    src.appToken,
   );
 
   const feeds = items.map((item: any) => {
@@ -112,14 +114,15 @@ async function handleFeeds(request: Request): Promise<Response> {
 }
 
 // GET /api/home?action=top5
-async function handleTop5(): Promise<Response> {
+async function handleTop5(request: Request): Promise<Response> {
+  const src = getSource(request);
   const weekStart = getWeekStart();
   const allItems: any[] = [];
   let pageToken: string | undefined;
   let hasMore = true;
 
   while (hasMore) {
-    const result = await bitableListRecords(PRAISE_TABLE_ID, undefined, undefined, pageToken, 100);
+    const result = await bitableListRecords(src.tableId, undefined, undefined, pageToken, 100, src.appToken);
     allItems.push(...result.items);
     hasMore = result.hasMore;
     pageToken = result.pageToken;
