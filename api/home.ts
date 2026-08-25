@@ -1,6 +1,6 @@
 ﻿import { bitableListRecords } from './_lib/feishu.js';
 import { FIELD_NAMES, PRAISE_TYPE_REVERSE } from './_lib/constants.js';
-import { success, error, extractFields, extractUserId, extractUserName, formatDate, getWeekStart, getQuery } from './_lib/utils.js';
+import { success, error, extractFields, extractUserId, extractUserName, extractUser, formatDate, getWeekStart, getQuery } from './_lib/utils.js';
 import { getSessionUser } from './_lib/session.js';
 import { getSource } from './_lib/datasource.js';
 
@@ -86,8 +86,8 @@ async function handleFeeds(request: Request): Promise<Response> {
     const fields = extractFields(item);
     return {
       id: item.record_id,
-      praiser: extractUserName(fields[FIELD_NAMES.PRAISER]),
-      praisedUser: extractUserName(fields[FIELD_NAMES.PRAISED_USER]),
+      praiser: extractUser(fields[FIELD_NAMES.PRAISER]),
+      praisedUser: extractUser(fields[FIELD_NAMES.PRAISED_USER]),
       content: fields[FIELD_NAMES.CONTENT] || '',
       type: PRAISE_TYPE_REVERSE[fields[FIELD_NAMES.PRAISE_TYPE]] || null,
       likeCount: Number(fields[FIELD_NAMES.LIKE_COUNT]) || 0,
@@ -142,7 +142,7 @@ async function handleTop5(request: Request): Promise<Response> {
     const fields = extractFields(item);
     const userId = extractUserId(fields[FIELD_NAMES.PRAISED_USER]);
     if (userId) {
-      const name = extractUserName(fields[FIELD_NAMES.PRAISED_USER]);
+      const name = extractUser(fields[FIELD_NAMES.PRAISED_USER]);
       countMap[userId] = countMap[userId] || { userId, name, count: 0 };
       countMap[userId].count += 1;
     }

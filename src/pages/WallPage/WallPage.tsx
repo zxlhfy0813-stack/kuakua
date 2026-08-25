@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Loader2, Heart, Trash2 } from 'lucide-react';
 import { wallApi, praiseApi } from '@client/src/api';
 import { CanRole } from '@lark-apaas/client-toolkit/auth';
+import { UserDisplay } from '@client/src/components/business-ui/user-display';
 
 import {
   Dialog,
@@ -104,9 +105,9 @@ function WallCard({
       className="group cursor-pointer rounded-xl border bg-card p-6 shadow-sm transition-shadow duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="mb-3 flex items-center gap-2 text-sm">
-        <TextUserDisplay name={item.praiser} />
+        <UserDisplay value={item.praiser as any} size="small" showUserProfile={false} />
         <span className="text-muted-foreground">夸赞</span>
-        <TextUserDisplay name={item.praisedUser} />
+        <UserDisplay value={item.praisedUser as any} size="small" showUserProfile={false} />
       </div>
 
       {/* <p className="mb-4 line-clamp-3 text-sm leading-relaxed text-foreground">
@@ -185,11 +186,11 @@ function DetailDialog({
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">夸赞人</span>
-              <TextUserDisplay name={detail.praiser} />
+              <UserDisplay value={detail.praiser as any} size="small" showUserProfile={false} />
             </div>
             <div className="flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">被夸人</span>
-              <TextUserDisplay name={detail.praisedUser} />
+              <UserDisplay value={detail.praisedUser as any} size="small" showUserProfile={false} />
             </div>
             <div>
               <p className="mb-1 text-xs text-muted-foreground">夸赞理由</p>

@@ -4,6 +4,11 @@
 export type PraiseType = 'collaboration' | 'professional' | 'innovation' | 'helpful';
 
 /**
+ * 人员（飞书样式：头像+名字）
+ */
+export type UserRef = { user_id?: string; name?: string; avatar?: string } | string;
+
+/**
  * 创建夸赞请求
  */
 export type CreatePraiseRequest = {
@@ -26,8 +31,8 @@ export type CreatePraiseResponse = {
  */
 export type PraiseDetailResponse = {
   id: string;
-  praiser: string;
-  praisedUser: string;
+  praiser: UserRef;
+  praisedUser: UserRef;
   content: string;
   type: PraiseType | null;
   likeCount: number;
@@ -63,8 +68,8 @@ export type HomeStatisticsResponse = {
  */
 export type HomeFeedItem = {
   id: string;
-  praiser: string;
-  praisedUser: string;
+  praiser: UserRef;
+  praisedUser: UserRef;
   content: string;
   type: PraiseType | null;
   likeCount: number;
@@ -102,8 +107,8 @@ export type HomeTop5Response = {
  */
 export type WallItem = {
   id: string;
-  praiser: string;
-  praisedUser: string;
+  praiser: UserRef;
+  praisedUser: UserRef;
   content: string;
   type: PraiseType | null;
   likeCount: number;
@@ -157,8 +162,8 @@ export type MyPraisesStatisticsResponse = {
  */
 export type MyPraiseItem = {
   id: string;
-  praiser: string;
-  praisedUser: string;
+  praiser: UserRef;
+  praisedUser: UserRef;
   content: string;
   type: PraiseType | null;
   likeCount: number;

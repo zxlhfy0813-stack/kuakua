@@ -395,7 +395,7 @@ const SendPage: React.FC = () => {
                     <div key="preview-with-users" className="space-y-4">
                       <div className="flex flex-wrap items-center gap-2">
                         {selectedUserIds.map((uid) => (
-                          <UserDisplay key={uid} userId={uid} size="small" />
+                          <UserDisplay key={uid} userId={uid} size="small" showUserProfile={false} />
                         ))}
                       </div>
                       <div className="flex flex-wrap gap-2">

@@ -6,6 +6,7 @@ import 'dayjs/locale/zh-cn';
 import { Users, TrendingUp, Heart, Send, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosForBackend } from '@lark-apaas/client-toolkit/utils/getAxiosForBackend';
+import { UserDisplay } from '@client/src/components/business-ui/user-display';
 import { Button } from '@client/src/components/ui/button';
 import { useKuakuaAuth } from '@/auth';
 import { logger } from '@lark-apaas/client-toolkit/logger';
@@ -97,9 +98,9 @@ const isValidUserId = (id: string): boolean => {
 const FeedCard: React.FC<FeedCardProps> = ({ item }) => (
   <div className="rounded-xl bg-card p-5 shadow-sm transition-shadow duration-200 hover:shadow-md">
     <div className="flex items-center gap-2 text-sm">
-      <TextUserDisplay name={item.praiser} />
+      <UserDisplay value={item.praiser as any} size="small" showUserProfile={false} />
       <span className="text-muted-foreground">夸了</span>
-      <TextUserDisplay name={item.praisedUser} />
+      <UserDisplay value={item.praisedUser as any} size="small" showUserProfile={false} />
     </div>
     {/* <p className="mt-3 text-sm leading-relaxed text-foreground">
       {item.content}

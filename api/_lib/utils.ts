@@ -56,6 +56,22 @@ export function extractUserName(value: any): string {
   return first.name || first.en_name || first.user_id || first.id || '';
 }
 
+/**
+ * 飞书「人员」字段 → 前端展示用对象 { user_id, name, avatar }（飞书样式头像+名字）
+ */
+export function extractUser(value: any): { user_id: string; name: string; avatar: string } {
+  const first = getUserFirst(value);
+  if (!first) return { user_id: '', name: '', avatar: '' };
+  if (typeof first === 'string') {
+    return { user_id: first, name: first, avatar: '' };
+  }
+  return {
+    user_id: first.id || first.user_id || first.open_id || '',
+    name: first.name || first.en_name || first.user_id || first.id || '',
+    avatar: first.avatar_url || first.avatar?.avatar_72 || first.avatar?.avatar_240 || '',
+  };
+}
+
 function getUserFirst(value: any): any {
   if (!value) return null;
   return Array.isArray(value) ? value[0] : value;

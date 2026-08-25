@@ -5,7 +5,7 @@
   bitableBatchGetRecords,
 } from './_lib/feishu.js';
 import { FIELD_NAMES, PRAISE_TYPE_MAP } from './_lib/constants.js';
-import { success, error, extractFields, extractUserId, extractUserName, formatDate, getQuery, getBody } from './_lib/utils.js';
+import { success, error, extractFields, extractUserId, extractUserName, extractUser, formatDate, getQuery, getBody } from './_lib/utils.js';
 import { getSessionUser } from './_lib/session.js';
 import { getSource } from './_lib/datasource.js';
 
@@ -90,8 +90,8 @@ async function handleGetById(request: Request): Promise<Response> {
 
   return success({
     id: item.record_id,
-    praiser: extractUserName(fields[FIELD_NAMES.PRAISER]),
-    praisedUser: extractUserName(fields[FIELD_NAMES.PRAISED_USER]),
+    praiser: extractUser(fields[FIELD_NAMES.PRAISER]),
+    praisedUser: extractUser(fields[FIELD_NAMES.PRAISED_USER]),
     content: fields[FIELD_NAMES.CONTENT] || '',
     type: fields[FIELD_NAMES.PRAISE_TYPE] || '',
     likeCount: Number(fields[FIELD_NAMES.LIKE_COUNT]) || 0,
@@ -116,7 +116,7 @@ async function handleRecentPraised(request: Request): Promise<Response> {
       const fields = extractFields(item);
       return {
         userId: extractUserId(fields[FIELD_NAMES.PRAISED_USER]),
-        name: extractUserName(fields[FIELD_NAMES.PRAISED_USER]),
+        name: extractUser(fields[FIELD_NAMES.PRAISED_USER]),
         lastPraiseAt: formatDate(fields[FIELD_NAMES.CREATED_AT]),
       };
     });
