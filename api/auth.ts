@@ -8,7 +8,7 @@ const CALLBACK = `${APP_URL}/api/auth`;
 const COOKIE = 'kuakua_session';
 const MAX_AGE = 60 * 60 * 24 * 7; // 7 天
 
-const AUTH_INDEX = 'https://open.feishu.cn/open-apis/authen/v1/index';
+const AUTH_INDEX = 'https://open.feishu.cn/open-apis/authen/v1/authorize';
 
 function b64url(buf: Buffer): string {
   return buf.toString('base64url');
